@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # SplitPay — Android App
 
 > Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the government's 0.4% MDR threshold for merchants — and run them as a guided sequence.
@@ -235,3 +236,6 @@ Contact: [your email]
 ---
 
 *SplitPay — making large UPI payments frictionless.*
+=======
+# SplitPay
+>>>>>>> fbb937e56883bc2732d9cc90b538b778cf1cb7ae
