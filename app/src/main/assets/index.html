@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- PWA manifest not needed in native app -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- Apple PWA meta tags removed: irrelevant in an Android native WebView app -->
+<meta name="theme-color" content="#F5F2EB">
+<title>SplitPay</title>
+<meta name="android-app" content="splitpay">
+<style>
+:root {
+  /* Light Theme (Pen & Paper Ink) */
+  --bg: #F5F2EB;
+  --bg-dots: repeating-linear-gradient(transparent, transparent 27px, #E3DCCF 27px, #E3DCCF 28px);
+  --surf: #FCFAED;
+  --surf2: #EAE5D9;
+  --glass: rgba(245, 242, 235, 0.95);
+  
+  --ink: #1C2128;
+  --ink-light: #555555;
+  --bdr: #1C2128;
+  
+  --ok: #205938;
+  --ok-bg: #E8F2EC;
+  --err: #8A2525;
+  --err-bg: #F4E4E4;
+  --shd: 4px 4px 0px var(--ink);
+  --shd-hover: 2px 2px 0px var(--ink);
+  
+  --r: 8px;
+  --rs: 4px;
+}
+/* Dark Theme (Blueprint / Slate) */
+@media(prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A1E24;
+    --bg-dots: repeating-linear-gradient(transparent, transparent 27px, #2A303A 27px, #2A303A 28px);
+    --surf: #22272E;
+    --surf2: #2D333B;
+    --glass: rgba(26, 30, 36, 0.95);
+    
+    --ink: #E8E3D8;
+    --ink-light: #B0B7C3;
+    --bdr: #E8E3D8;
+    
+    --ok: #85C49F;
+    --ok-bg: #1A3626;
+    --err: #D88B8B;
+    --err-bg: #3D1A1A;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A1E24;
+  --bg-dots: repeating-linear-gradient(transparent, transparent 27px, #2A303A 27px, #2A303A 28px);
+  --surf: #22272E;
+  --surf2: #2D333B;
+  --glass: rgba(26, 30, 36, 0.95);
+  --ink: #E8E3D8;
+  --ink-light: #B0B7C3;
+  --bdr: #E8E3D8;
+  --ok: #85C49F;
+  --ok-bg: #1A3626;
+  --err: #D88B8B;
+  --err-bg: #3D1A1A;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+/* Fixed app shell: header (topbar + step phases) is pinned at the top, the
+   action dock is pinned at the bottom, and ONLY the middle area scrolls.
+   System-bar insets are handled natively (MainActivity pads the WebView),
+   so no safe-area padding here — adding both causes double top/bottom gaps. */
+body {
+  font-family: 'Zilla Slab', serif;
+  background: var(--bg);
+  background-image: var(--bg-dots);
+  color: var(--ink);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+/* Middle band. It does NOT scroll itself — the active screen fills it as a
+   flex column: its .wrap scrolls, its .bottom-dock stays pinned. */
+#app-main { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+/* Base Icons */
+.icn { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; flex-shrink: 0; display: inline-block; }
+.icn-sm { width: 16px; height: 16px; stroke-width: 2.5; }
+.icn-lg { width: 32px; height: 32px; stroke-width: 2; }
+/* Topbar */
+.topbar { flex: 0 0 auto; position: relative; z-index: 300; background: var(--glass); backdrop-filter: blur(8px); padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid var(--bdr); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.4rem; color: var(--ink); font-style: italic; letter-spacing: -0.02em; }
+.logo-ic { width: 34px; height: 34px; background: var(--ink); color: var(--bg); border-radius: var(--rs); display: flex; align-items: center; justify-content: center; }
+.theme-btn { background: var(--surf2); border: 2px solid var(--bdr); color: var(--ink); border-radius: var(--rs); width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shd-hover); transition: all 0.1s; }
+.theme-btn:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px var(--ink); }
+/* Step Indicator */
+.stepbar { flex: 0 0 auto; background: var(--surf); border-bottom: 2px solid var(--bdr); padding: 12px 20px; display: flex; align-items: center; }
+.sd { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
+.sd .circ { width: 32px; height: 32px; border-radius: var(--rs); border: 2px solid var(--bdr); background: var(--surf2); display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 0.9rem; font-weight: 700; color: var(--ink-light); transition: all 0.3s ease; }
+.sd.act .circ { border-color: var(--ink); background: var(--ink); color: var(--bg); transform: scale(1.1); box-shadow: var(--shd-hover); }
+.sd.done .circ { border-color: var(--ink); background: var(--surf); color: var(--ink); }
+.sd .slbl { font-size: 0.7rem; color: var(--ink-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Mono', monospace; }
+.sd.act .slbl { color: var(--ink); }
+.sline { flex: 1; height: 2px; background: var(--ink-light); align-self: flex-start; margin-top: 27px; opacity: 0.3; transition: all 0.3s ease; }
+.sline.done { background: var(--ink); opacity: 1; }
+/* Screens & Containers */
+.screen { display: none; }
+.screen.active { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; animation: fadeUp 0.3s cubic-bezier(0.16,1,0.3,1); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* .wrap is the only scrollable part of a screen; the dock below it never moves */
+.wrap { max-width: 500px; width: 100%; margin: 0 auto; padding: 20px 20px 24px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; overflow-x: hidden; }
+.wrap::-webkit-scrollbar { display: none; }
+/* Cards & Layout */
+.card { background: var(--surf); border-radius: var(--r); padding: 24px; box-shadow: var(--shd); border: 2px solid var(--bdr); margin-bottom: 24px; }
+.ch { font-weight: 700; font-size: 1.2rem; margin-bottom: 20px; color: var(--ink); display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 2px dashed var(--bdr); }
+.fld { margin-bottom: 16px; }
+.lbl { display: block; font-size: 0.75rem; font-weight: 700; color: var(--ink-light); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Space Mono', monospace; }
+/* Inputs */
+input[type=text], input[type=number], input[type=tel] { width: 100%; padding: 16px; border: 2px solid var(--bdr); border-radius: var(--rs); font-size: 1.1rem; font-weight: 700; font-family: 'Space Mono', monospace; color: var(--ink); background: var(--surf2); transition: all 0.2s; -webkit-appearance: none; appearance: none; }
+input:focus { outline: none; background: var(--surf); box-shadow: var(--shd); transform: translate(-2px, -2px); }
+.shake { animation: shake 0.4s both; border-color: var(--err)!important; background: var(--err-bg)!important; }
+@keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+/* Big Amount Input */
+.pfw { position: relative; }
+.pfx { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-weight: 700; color: var(--ink-light); font-family: 'Space Mono', monospace; font-size: 1.5rem; }
+.bigamt input { font-size: 2.8rem; padding: 20px 20px 20px 55px; text-align: center; }
+/* Payee Badge */
+.payee-badge { display: flex; align-items: center; gap: 16px; background: var(--surf); border: 2px solid var(--bdr); border-radius: var(--r); padding: 16px; margin-bottom: 24px; box-shadow: var(--shd); }
+.pb-av { width: 56px; height: 56px; border-radius: var(--rs); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; color: var(--bg); background: var(--ink); border: 2px solid var(--bdr); font-family: 'Space Mono', monospace; }
+.pb-name {  font-weight: 700; font-size: 1.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;  max-width: 250px; }
+.pb-upi {  font-size: 0.85rem; color: var(--ink-light); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 6px; font-family: 'Space Mono', monospace;  max-width: 250px; }
+/* Tabs & Chips */
+.tabs { display: flex; background: var(--surf2); padding: 6px; border-radius: var(--rs); margin-bottom: 20px; border: 2px solid var(--bdr); gap: 6px; }
+.tab { flex: 1; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--ink-light); border: 2px solid transparent; border-radius: 6px; transition: all 0.2s; font-family: inherit; }
+.tab.on { background: var(--surf); color: var(--ink); border: 2px solid var(--bdr); box-shadow: var(--shd-hover); }
+.tab-panel { display: none; }
+.tab-panel.on { display: block; }
+.chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.chip { flex: 1; min-width: 28%; padding: 14px 8px; border-radius: var(--rs); border: 2px solid var(--bdr); font-size: 1rem; font-weight: 700; text-align: center; cursor: pointer; background: var(--surf2); color: var(--ink-light); transition: all 0.15s; font-family: 'Space Mono', monospace; }
+.chip.on { background: var(--surf); color: var(--ink); box-shadow: var(--shd); transform: translate(-2px, -2px); }
+/* Lists & Controls */
+.split-ctrl { display: flex; align-items: center; justify-content: space-between; background: var(--surf2); padding: 16px; border-radius: var(--rs); border: 2px solid var(--bdr); margin-bottom: 20px; }
+.sc-label { font-weight: 700; font-size: 1.05rem; }
+.sc-btns { display: flex; align-items: center; gap: 16px; background: var(--surf); padding: 6px; border-radius: var(--rs); border: 2px solid var(--bdr); box-shadow: var(--shd-hover); }
+.sc-btn { width: 38px; height: 38px; border-radius: 6px; border: 2px solid var(--bdr); background: var(--surf2); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; }
+.sc-btn:active { background: var(--ink); color: var(--surf); }
+.sc-val { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1.25rem; width: 32px; text-align: center; color: var(--ink); }
+/* Toggles */
+.split-toggle { display: flex; background: var(--surf2); padding: 6px; border-radius: var(--rs); border: 2px solid var(--bdr); margin-bottom: 20px; gap: 6px; }
+.stog { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; font-size: 0.95rem; font-weight: 700; cursor: pointer; background: transparent; color: var(--ink-light); border: 2px solid transparent; border-radius: 6px; transition: all 0.2s; font-family: inherit; }
+.stog.on { background: var(--surf); color: var(--ink); border-color: var(--bdr); box-shadow: var(--shd-hover); }
+/* Previews */
+.split-preview { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; padding-right: 4px; margin-top: 16px; }
+.spi { display: flex; align-items: center; gap: 14px; padding: 16px; border: 2px solid var(--bdr); border-radius: var(--rs); background: var(--surf); }
+.spi-n { width: 36px; height: 36px; border-radius: var(--rs); background: var(--ink); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; flex-shrink: 0; font-family: 'Space Mono', monospace; }
+.spi-amt { width: 125px; flex-shrink: 0; }
+.spi-amt input { padding: 12px; font-size: 1.05rem; text-align: right; }
+.spi-bar-wrap { flex: 1; height: 12px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 2px solid var(--bdr); }
+.spi-bar { height: 100%; background: var(--ink); transition: width 0.4s cubic-bezier(0.16,1,0.3,1); }
+.sum-check { font-size: 0.9rem; font-weight: 700; padding: 14px; border-radius: var(--rs); display: flex; align-items: center; gap: 10px; font-family: 'Space Mono', monospace; border: 2px solid var(--bdr); background: var(--surf2); }
+/* Mode Grid */
+.modegrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.modec { border: 2px solid var(--bdr); border-radius: var(--r); padding: 20px 16px; cursor: pointer; text-align: center; transition: all 0.2s; background: var(--surf); box-shadow: 2px 2px 0px transparent; }
+.modec.on { background: var(--surf2); box-shadow: var(--shd); transform: translate(-2px, -2px); }
+.mtitle { font-weight: 700; font-size: 1.1rem; margin-top: 12px; margin-bottom: 6px; }
+.mdesc { font-size: 0.85rem; color: var(--ink-light); line-height: 1.4; font-style: italic; }
+/* Switch */
+.turbo-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; background: var(--surf2); border: 2px dashed var(--bdr); border-radius: var(--rs); }
+.turbo-title { font-weight: 700; font-size: 1.05rem; }
+.turbo-desc { font-size: 0.85rem; color: var(--ink-light); margin-top: 6px; font-style: italic; }
+.sw { position: relative; width: 56px; height: 32px; flex-shrink: 0; cursor: pointer; }
+.sw input { opacity: 0; width: 0; height: 0; }
+.sw-track { position: absolute; inset: 0; background: var(--surf); border: 2px solid var(--bdr); border-radius: 16px; transition: 0.3s; }
+.sw-thumb { position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; background: var(--ink); border-radius: 50%; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1); }
+.sw input:checked ~ .sw-track { background: var(--surf2); }
+.sw input:checked ~ .sw-thumb { transform: translateX(24px); }
+/* Buttons & Dock */
+.bottom-dock { flex: 0 0 auto; padding: 12px 20px; background: var(--glass); backdrop-filter: blur(10px); border-top: 2px solid var(--bdr); z-index: 200; display: flex; gap: 12px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 22px; border-radius: var(--rs); font-size: 1.1rem; font-weight: 700; font-family: inherit; cursor: pointer; border: 2px solid var(--bdr); transition: all 0.1s ease; text-decoration: none; white-space: nowrap; background: var(--surf); color: var(--ink); box-shadow: var(--shd); }
+.btn-sm { padding: 12px 16px; font-size: 1rem; border-radius: 6px; }
+.btn-full { width: 100%; flex: 1; }
+.btn-pri { background: var(--ink); color: var(--bg); }
+.btn-pri:active, .btn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px var(--ink); }
+.btn-ghost { background: var(--surf); box-shadow: var(--shd-hover); }
+/* Progress & Execution */
+.progrow { background: var(--surf); border-radius: var(--r); padding: 24px; margin-bottom: 24px; border: 2px solid var(--bdr); box-shadow: var(--shd); }
+.progtop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.proglbl { font-size: 0.85rem; color: var(--ink-light); font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Space Mono', monospace; }
+.progcount { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1.3rem; color: var(--ink); }
+.dots { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.dot { width: 10px; height: 10px; border-radius: 2px; background: var(--surf2); border: 2px solid var(--bdr); transition: all 0.3s; }
+.dot.cur { background: var(--ink); transform: scaleY(1.4); }
+.dot.ok { background: var(--ok); }
+.dot.fail { background: var(--err); position: relative; }
+.paybig { background: var(--surf); color: var(--ink); border-radius: var(--r); padding: 40px 24px; text-align: center; margin-bottom: 24px; box-shadow: var(--shd); border: 3px solid var(--bdr); }
+.ppart { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Space Mono', monospace; border-bottom: 2px dashed var(--bdr); padding-bottom: 12px; margin-bottom: 20px; display: inline-block; }
+.pamt { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 4rem; line-height: 1.1; margin: 16px 0 12px; letter-spacing: -0.05em; }
+.psub { font-size: 1rem; color: var(--ink-light); margin-bottom: 32px; font-style: italic; }
+.openbtn { display: flex; align-items: center; justify-content: center; gap: 12px; background: var(--ink); color: var(--bg); border-radius: var(--rs); padding: 22px; font-size: 1.25rem; font-weight: 700; font-family: inherit; text-decoration: none; width: 100%; box-shadow: 4px 4px 0px var(--ink-light); border: 2px solid var(--ink); cursor: pointer; transition: all 0.1s; }
+.openbtn:active { transform: translate(4px, 4px); box-shadow: 0px 0px 0px var(--ink-light); }
+.retrylink { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--surf2); color: var(--ink); border: 2px dashed var(--bdr); border-radius: var(--rs); padding: 18px; font-size: 1.05rem; font-weight: 700; cursor: pointer; width: 100%; margin-top: 16px; transition: all 0.2s; }
+/* Status & Countdown */
+.turbo-state { background: var(--ink); color: var(--bg); border-radius: var(--r); padding: 40px 24px; text-align: center; margin-bottom: 24px; box-shadow: var(--shd); border: 2px solid var(--bdr); }
+.ts-title { font-weight: 700; font-size: 1.6rem; margin-bottom: 12px; font-family: 'Space Mono', monospace; }
+.ts-sub { font-size: 1.05rem; opacity: 0.8; margin-bottom: 32px; font-style: italic; }
+.ts-bar { height: 12px; background: var(--ink-light); border-radius: 4px; overflow: hidden; margin: 0 auto; max-width: 200px; border: 2px solid var(--bg); }
+.ts-fill { height: 100%; background: var(--bg); transition: width 0.8s linear; }
+.cdcard { background: var(--surf); border-radius: var(--r); padding: 40px 24px; text-align: center; margin-bottom: 24px; border: 2px dashed var(--bdr); box-shadow: var(--shd); }
+.cdnum { font-family: 'Space Mono', monospace; font-size: 5.5rem; font-weight: 700; color: var(--ink); line-height: 1; margin: 20px 0; }
+/* Manual List */
+.mlist-wrap { display: flex; flex-direction: column; gap: 16px; }
+/* Manual ledger fills the remaining screen height and scrolls INSIDE the
+   box — the ledger header and Cancel dock stay pinned, nothing overflows. */
+#mlist { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.mi { display: flex; align-items: center; gap: 14px; padding: 16px; border: 2px solid var(--bdr); border-radius: var(--rs); background: var(--surf); transition: all 0.2s; box-shadow: 2px 2px 0px transparent; }
+.mi.cur { background: var(--surf2); box-shadow: var(--shd); }
+.mi.ok { background: var(--ok-bg); border-color: var(--ok); }
+.mi.fail { background: var(--err-bg); border-color: var(--err); }
+.mi-num { width: 44px; height: 44px; border-radius: var(--rs); background: var(--surf); border: 2px solid var(--bdr); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; flex-shrink: 0; font-family: 'Space Mono', monospace; }
+.mi.cur .mi-num { background: var(--ink); color: var(--bg); }
+.mi.ok .mi-num { background: var(--ok); color: var(--bg); border-color: var(--ok); }
+.mi.fail .mi-num { background: var(--err); color: var(--bg); border-color: var(--err); }
+.mi-body { flex: 1; }
+.mi-amt { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1.25rem; }
+.mi-ref { font-size: 0.75rem; color: var(--ink-light); font-weight: 700; margin-top: 6px; font-family: 'Space Mono', monospace; }
+/* Modals */
+.modal { position: fixed; inset: 0; background: rgba(28, 33, 40, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 500; display: flex; align-items: flex-end; }
+.modal.hide { display: none; }
+.modal-full { position: fixed; inset: 0; background: var(--ink); z-index: 600; display: flex; flex-direction: column; }
+.modal-full.hide { display: none; }
+.msheet { background: var(--bg); background-image: var(--bg-dots); border-radius: 24px 24px 0 0; width: 100%; max-width: 500px; margin: 0 auto; padding: 24px 24px 40px; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); border-top: 4px solid var(--bdr); animation: sup 0.3s cubic-bezier(0.16,1,0.3,1); }
+@keyframes sup { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.shandle { width: 56px; height: 6px; background: var(--bdr); border-radius: 3px; margin: 0 auto 24px; }
+.stitle { font-weight: 700; font-size: 1.5rem; text-align: center; margin-bottom: 12px; font-family: 'Space Mono', monospace; }
+.ssub { font-size: 1.05rem; color: var(--ink-light); text-align: center; margin-bottom: 32px; font-style: italic; }
+.sbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* Camera */
+/* Top bar is pinned to fixed colors: it always sits over the black camera
+   feed, so theme variables would flip it dark-on-dark in dark mode. */
+.cam-topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); background: #1C2128; border-bottom: 2px solid rgba(255,255,255,0.35); box-shadow: 0 2px 14px rgba(0,0,0,0.55); position: relative; z-index: 5; }
+.cam-title { color: #F5F2EB; font-weight: 700; font-size: 1.15rem; font-family: 'Space Mono', monospace; letter-spacing: 0.02em; }
+.cam-close { background: #FFFFFF; border: 2px solid #FFFFFF; color: #1C2128; border-radius: var(--rs); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.1s; flex-shrink: 0; }
+.cam-close:active { transform: scale(0.92); }
+.cam-close .icn { stroke-width: 3; }
+/* Opaque white like .cam-close so the torch button reads as "ON" clearly */
+.cam-btn { background: #FFFFFF; border: 2px solid #FFFFFF; color: #1C2128; border-radius: var(--rs); width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.1s; }
+.cam-btn:active { transform: scale(0.92); }
+.cam-btn.on { background: #FFFFFF; color: #1C2128; }
+.cam-body { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
+#scan-video { width: 100%; height: 100%; object-fit: cover; }
+.scan-frame { position: absolute; width: 270px; height: 270px; border-radius: var(--r); box-shadow: 0 0 0 9999px rgba(28, 33, 40, 0.75); pointer-events: none; }
+.scan-frame .corner { position: absolute; width: 44px; height: 44px; border: 5px solid #FFFFFF; }
+.scan-frame .c-tl { top: 0; left: 0; border-right: none; border-bottom: none; border-top-left-radius: var(--r); }
+.scan-frame .c-tr { top: 0; right: 0; border-left: none; border-bottom: none; border-top-right-radius: var(--r); }
+.scan-frame .c-bl { bottom: 0; left: 0; border-right: none; border-top: none; border-bottom-left-radius: var(--r); }
+.scan-frame .c-br { bottom: 0; right: 0; border-left: none; border-top: none; border-bottom-right-radius: var(--r); }
+.cam-hint { position: absolute; bottom: 28px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.9); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.05em; text-transform: uppercase; font-family: 'Space Mono', monospace; }
+/* Done Screen */
+.donecard { background: var(--surf); border-radius: var(--r); padding: 48px 24px; text-align: center; box-shadow: var(--shd); border: 2px solid var(--bdr); }
+.dtitle { font-weight: 700; font-size: 2rem; margin-bottom: 12px; margin-top: 24px; font-family: 'Space Mono', monospace; }
+.dsub { font-size: 1.1rem; color: var(--ink-light); margin-bottom: 32px; font-style: italic; }
+.dstats { display: flex; gap: 16px; margin-bottom: 32px; }
+.dstat { background: var(--surf2); border-radius: var(--rs); padding: 20px 16px; text-align: center; flex: 1; border: 2px solid var(--bdr); box-shadow: 2px 2px 0px var(--ink); }
+.dstat .v { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1.5rem; }
+.dstat .l { font-size: 0.75rem; color: var(--ink-light); font-weight: 700; text-transform: uppercase; margin-top: 8px; letter-spacing: 0.08em; font-family: 'Space Mono', monospace; }
+/* Savings Card */
+.savings-card { background: var(--ok-bg); border: 2px dashed var(--ok); border-radius: var(--rs); padding: 24px; margin-bottom: 32px; text-align: center; box-shadow: 4px 4px 0px var(--ok); transform: translate(-2px, -2px); }
+.savings-lbl { color: var(--ok); font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-family: 'Space Mono', monospace; margin-bottom: 8px; }
+.savings-val { color: var(--ok); font-size: 2.8rem; font-weight: 700; font-family: 'Space Mono', monospace; line-height: 1; }
+.savings-sub { color: var(--ok); font-size: 0.85rem; margin-top: 12px; font-style: italic; font-weight: 600; opacity: 0.9; }
+/* Receipt & Utils */
+.receipt { background: var(--surf2); border: 2px dashed var(--bdr); border-radius: var(--rs); padding: 20px; margin-bottom: 32px; text-align: left; }
+.receipt-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--bdr); font-size: 1rem; font-family: 'Space Mono', monospace; font-weight: 700; }
+.receipt-row:last-child { border: none; padding-bottom: 0; }
+.receipt-row .label { color: var(--ink-light); }
+.info-row { display: flex; gap: 12px; flex-direction: column; font-size: 0.9rem; color: var(--ink-light); margin-bottom: 24px; padding: 20px; background: var(--surf2); border-radius: var(--rs); border: 2px dashed var(--bdr); font-style: italic; }
+.info-item { display: flex; align-items: center; gap: 12px; }
+.toast { position: fixed; top: 20px; left: 20px; right: 20px; background: var(--ink); color: var(--bg); padding: 20px 24px; border-radius: var(--rs); font-size: 1.05rem; font-weight: 700; z-index: 1000; transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.3s; transform: translateY(-120px); opacity: 0; box-shadow: var(--shd); display: flex; align-items: center; gap: 16px; max-width: 500px; margin: 0 auto; border: 2px solid var(--bdr); font-family: 'Space Mono', monospace; }
+.toast.show { transform: translateY(0); opacity: 1; }
+/* Hidden SVG <symbol> library. Scoped so icons (svg.icn / svg with inline
+   style="display:inline-block") stay visible — blanket `svg{display:none}`
+   used to hide the flashlight & close buttons in the QR scanner header. */
+svg:not(.icn):not([style*="inline-block"]) { display: none; }
+#sc4b .wrap { flex: 1 1 auto; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+#sc4b .progrow { flex: 0 0 auto; }
+.mi { flex-shrink: 0; }
+</style>
+</head>
+
+<body>
+
+<!-- Hidden SVG Library -->
+<svg>
+  <symbol id="ic-cam" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></symbol>
+  <symbol id="ic-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
+  <symbol id="ic-pen" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></symbol>
+  <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+  <symbol id="ic-arr-r" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></symbol>
+  <symbol id="ic-arr-l" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h7v7h-7zM14 18h3M18 14v3"></path></symbol>
+  <symbol id="ic-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></symbol>
+  <symbol id="ic-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></symbol>
+  <symbol id="ic-bot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01"></path></symbol>
+  <symbol id="ic-hand" viewBox="0 0 24 24"><path d="M12 2v10M12 12a2 2 0 0 1-2-2V6a2 2 0 0 0-4 0v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 1 4 0v4a2 2 0 0 1-2 2h-4"></path></symbol>
+  <symbol id="ic-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></symbol>
+  <symbol id="ic-logo" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></symbol>
+  <symbol id="ic-theme" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></symbol>
+</svg>
+
+<div class="toast" id="toast">
+  <svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg>
+  <span id="toast-msg"></span>
+</div>
+
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-ic"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-logo"></use></svg></div>
+    SplitPay
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle Theme">
+    <svg class="icn" style="display:inline-block;"><use href="#ic-theme"></use></svg>
+  </button>
+</div>
+
+<div class="stepbar">
+  <div class="sd act" id="sd1"><div class="circ">1</div><div class="slbl">Payee</div></div>
+  <div class="sline" id="sl12"></div>
+  <div class="sd" id="sd2"><div class="circ">2</div><div class="slbl">Amount</div></div>
+  <div class="sline" id="sl23"></div>
+  <div class="sd" id="sd3"><div class="circ">3</div><div class="slbl">Plan</div></div>
+  <div class="sline" id="sl34"></div>
+  <div class="sd" id="sd4"><div class="circ">4</div><div class="slbl">Pay</div></div>
+</div>
+
+<!-- ═══ Scrollable middle: screens render here; header & dock stay fixed ═══ -->
+<div id="app-main">
+
+<!-- ═══ STEP 1: PAYEE ═══ -->
+<div class="screen active" id="sc1">
+<div class="wrap">
+  <div class="card">
+    <div class="ch">
+      <svg class="icn" style="display:inline-block;"><use href="#ic-pen"></use></svg> Payee Details
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="t-scan" onclick="upiTab('scan')"><svg class="icn" style="display:inline-block;"><use href="#ic-qr"></use></svg> Scan QR</button>
+      <button class="tab" id="t-type" onclick="upiTab('type')"><svg class="icn" style="display:inline-block;"><use href="#ic-pen"></use></svg> Enter UPI</button>
+    </div>
+    
+    <div class="tab-panel on" id="tp-scan">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0 8px;">
+        <div style="font-size:1rem;color:var(--ink-light);text-align:center;font-style:italic;">Scan a merchant or peer QR code</div>
+        <button class="btn btn-pri btn-full" onclick="openCam()"><svg class="icn" style="display:inline-block;"><use href="#ic-cam"></use></svg> Open Camera</button>
+        <div style="display:flex;gap:16px;width:100%;">
+          <label class="btn btn-ghost btn-full" style="padding:16px;">
+            <svg class="icn" style="display:inline-block;"><use href="#ic-cam"></use></svg> Photo
+            <input type="file" accept="image/*" capture="environment" onchange="scanUpload(this)" style="display:none;">
+          </label>
+          <label class="btn btn-ghost btn-full" style="padding:16px;">
+            <svg class="icn" style="display:inline-block;"><use href="#ic-img"></use></svg> Gallery
+            <input type="file" accept="image/*" onchange="scanUpload(this)" style="display:none;">
+          </label>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-panel" id="tp-type">
+      <div class="fld" style="position:relative;">
+        <label class="lbl">UPI ID</label>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div style="flex:1;position:relative;">
+            <input type="text" id="iupi" placeholder="name@bank" autocomplete="off" spellcheck="false">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="pasteUPI()" style="padding: 16px;">
+            <svg class="icn" style="display:inline-block;"><use href="#ic-copy"></use></svg>
+          </button>
+        </div>
+      </div>
+      <div class="fld"><label class="lbl">Name (optional)</label><input type="text" id="iname" placeholder="Merchant or Person"></div>
+    </div>
+  </div>
+  
+  <div class="info-row">
+    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> Bypasses 0.4% Govt MDR for Merchants</div>
+    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> Auto-splits large transactions via UPI</div>
+    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> PIN required per execution</div>
+  </div>
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-pri btn-full" onclick="toStep2()">Continue <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></button>
+</div>
+</div>
+
+<!-- ═══ STEP 2: AMOUNT ═══ -->
+<div class="screen" id="sc2">
+<div class="wrap">
+  <div class="payee-badge">
+    <div class="pb-av" id="pb-av">?</div>
+    <div style="flex:1; overflow:hidden;">
+      <div class="pb-name" id="pb-name">Unknown</div>
+      <div class="pb-upi" id="pb-upi-val">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">Total Amount</div>
+    <div class="fld bigamt">
+      <div class="pfw"><span class="pfx">₹</span>
+        <input type="number" id="iamt" placeholder="0" min="1" max="10000" inputmode="numeric" oninput="sanitizeAmount(this)">
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip" onclick="sa(2500)">2,500</div>
+      <div class="chip" onclick="sa(5000)">5,000</div>
+      <div class="chip" onclick="sa(10000)">10K</div>
+    </div>
+    <div class="fld" style="margin-top:24px;"><label class="lbl">Payment Note (optional)</label>
+      <input type="text" id="inote" placeholder="Invoice, Rent, etc.">
+    </div>
+  </div>
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-ghost" style="flex:0 0 auto;" onclick="goTo(1)"><svg class="icn" style="display:inline-block;"><use href="#ic-arr-l"></use></svg></button>
+  <button class="btn btn-pri btn-full" onclick="toStep3()">Split Plan <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></button>
+</div>
+</div>
+
+<!-- ═══ STEP 3: PLAN ═══ -->
+<div class="screen" id="sc3">
+<div class="wrap">
+  <div class="card">
+    <div class="ch">Installment Plan</div>
+    <div class="split-ctrl">
+      <div>
+        <div class="sc-label">Total Parts</div>
+        <div style="font-size:0.85rem;color:var(--ink-light);font-style:italic;margin-top:4px;">Max ₹1,999 per part</div>
+      </div>
+      <div class="sc-btns">
+        <button class="sc-btn" onclick="adjParts(-1)">−</button>
+        <div class="sc-val" id="sc-val">0</div>
+        <button class="sc-btn" onclick="adjParts(+1)">+</button>
+      </div>
+    </div>
+
+    <div class="split-toggle">
+      <button class="stog on" id="st-eq" onclick="setSplitMode('equal')"><svg class="icn" style="display:inline-block;"><use href="#ic-repeat"></use></svg> Equal</button>
+      <button class="stog" id="st-rnd" onclick="setSplitMode('random')"><svg class="icn" style="display:inline-block;"><use href="#ic-shuffle"></use></svg> Random</button>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="sum-check ok" id="sum-check" style="margin:0;flex:1;margin-right:12px;">Total Matches</div>
+      <button class="btn btn-ghost btn-sm" id="reshuffle-btn" onclick="reshuffle()" style="display:none; padding:12px;"><svg class="icn" style="display:inline-block;"><use href="#ic-shuffle"></use></svg></button>
+    </div>
+
+    <div class="split-preview" id="split-preview"></div>
+  </div>
+
+  <div class="card">
+    <div class="ch">Execution Mode</div>
+    <div class="modegrid">
+      <div class="modec on" id="mc-auto" onclick="pickMode('auto')">
+        <div class="mico"><svg class="icn icn-lg" style="display:inline-block;"><use href="#ic-bot"></use></svg></div>
+        <div class="mtitle">Auto-Run</div>
+        <div class="mdesc">Launches app automatically.</div>
+      </div>
+      <div class="modec" id="mc-man" onclick="pickMode('manual')">
+        <div class="mico"><svg class="icn icn-lg" style="display:inline-block;"><use href="#ic-hand"></use></svg></div>
+        <div class="mtitle">Manual</div>
+        <div class="mdesc">Tap to pay each part.</div>
+      </div>
+    </div>
+
+    <div class="turbo-row" id="turbo-row">
+      <div>
+        <div class="turbo-title">Turbo Auto-Next</div>
+        <div class="turbo-desc">Bypass manual confirmations.</div>
+      </div>
+      <label class="sw"><input type="checkbox" id="turbo-chk" checked><div class="sw-track"></div><div class="sw-thumb"></div></label>
+    </div>
+  </div>
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-ghost" style="flex:0 0 auto;" onclick="goTo(2)"><svg class="icn" style="display:inline-block;"><use href="#ic-arr-l"></use></svg></button>
+  <button class="btn btn-pri btn-full" id="startbtn" onclick="startPay()">Start Sequence</button>
+</div>
+</div>
+
+<!-- ═══ STEP 4A: AUTO RUNNER ═══ -->
+<div class="screen" id="sc4a">
+<div class="wrap">
+  <div class="progrow">
+    <div class="progtop">
+      <span class="proglbl" id="a-lbl">Execution Progress</span>
+      <span class="progcount" id="a-count">1/0</span>
+    </div>
+    <div class="dots" id="a-dots"></div>
+  </div>
+
+  <div class="paybig" id="a-paybig">
+    <div class="ppart" id="a-ppart">Part 1 of 1</div>
+    <div class="pamt" id="a-pamt">₹0</div>
+    <div class="psub" id="a-psub">of ₹0 total</div>
+    
+    <a id="a-link" class="openbtn" onclick="onOpen()">Open UPI App <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></a>
+    
+    <!-- Added QR & Done Explicit Actions -->
+    <div style="display:flex; gap:12px; margin-top:16px;">
+      <button class="btn btn-ghost" style="flex:1; padding: 14px;" onclick="openCurQR()">
+        <svg class="icn" style="display:inline-block;"><use href="#ic-qr"></use></svg> Show QR
+      </button>
+      <button class="btn btn-ghost" style="flex:1; padding: 14px; color: var(--ok); border-color: var(--ok);" onclick="markCurDone()">
+        <svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg> Mark Done
+      </button>
+    </div>
+
+    <button class="retrylink" id="a-retry" onclick="retryCur()" style="display:none;"><svg class="icn" style="display:inline-block;"><use href="#ic-repeat"></use></svg> Retry Transfer</button>
+  </div>
+
+  <div class="turbo-state" id="a-ts" style="display:none;">
+    <div class="ts-title" id="ts-ttl">Launching...</div>
+    <div class="ts-sub" id="ts-sub">Redirecting to UPI</div>
+    <div class="ts-bar"><div class="ts-fill" id="ts-fill"></div></div>
+  </div>
+
+  <div class="cdcard" id="a-cd" style="display:none;">
+    <div style="font-size:0.95rem;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Mono',monospace;">Next Part In</div>
+    <div class="cdnum" id="a-cdnum">3</div>
+    <button class="btn btn-ghost" style="margin-top:24px;width:100%;" onclick="pauseAuto()">Pause Sequence</button>
+  </div>
+</div>
+<div class="bottom-dock" style="background:transparent;border:none;">
+  <button class="btn btn-ghost btn-full" style="background:var(--surf);" onclick="skipCur()">Skip Part</button>
+  <button class="btn btn-ghost btn-full" style="background:var(--surf);color:var(--err);" onclick="cancelAll()"><svg class="icn" style="display:inline-block; margin-right: 6px;"><use href="#ic-x"></use></svg> Cancel All</button>
+</div>
+</div>
+
+<!-- ═══ STEP 4B: MANUAL RUNNER ═══ -->
+<div class="screen" id="sc4b">
+<div class="wrap">
+  <div class="progrow">
+    <div class="progtop">
+      <span class="proglbl">Manual Ledger</span>
+      <span class="progcount" id="m-count">0/0</span>
+    </div>
+    <div class="dots" id="m-dots"></div>
+  </div>
+  <div class="mlist-wrap" id="mlist"></div>
+</div>
+<div class="bottom-dock" style="background:transparent;border:none;">
+  <button class="btn btn-ghost btn-full" style="background:var(--surf);" onclick="cancelAll()"><svg class="icn" style="display:inline-block; margin-right: 6px;"><use href="#ic-x"></use></svg> Cancel Sequence</button>
+</div>
+</div>
+
+<!-- ═══ STEP 5: DONE ═══ -->
+<div class="screen" id="sc5">
+<div class="wrap">
+  <div class="donecard">
+    <svg class="icn" style="width: 72px; height: 72px; margin-bottom:20px; display:inline-block;"><use href="#ic-check"></use></svg>
+    <div class="dtitle" id="d-title">Ledger Closed</div>
+    <div class="dsub" id="d-sub">Payment sequence finished.</div>
+    
+    <div class="dstats">
+      <div class="dstat"><div class="v" id="d-total">₹0</div><div class="l">Paid</div></div>
+      <div class="dstat"><div class="v" id="d-parts">0/0</div><div class="l">Parts</div></div>
+    </div>
+    
+    <!-- MDR Savings Card -->
+    <div class="savings-card" id="d-savings-card" style="display:none;">
+      <div class="savings-lbl">Merchant MDR Avoided</div>
+      <div class="savings-val" id="d-savings-val">₹0.00</div>
+      <div class="savings-sub">Based on Oct 2026 Govt guidelines (0.4% fee bypass)</div>
+    </div>
+    
+    <div class="receipt" id="d-receipt"></div>
+    
+    <div style="display:flex;gap:16px;">
+      <button class="btn btn-ghost btn-full" onclick="shareWA()"><svg class="icn" style="display:inline-block;"><use href="#ic-share"></use></svg> Share</button>
+      <button class="btn btn-ghost" style="flex:0 0 auto; padding:18px 24px;" onclick="copyReceipt()"><svg class="icn" style="display:inline-block;"><use href="#ic-copy"></use></svg></button>
+    </div>
+  </div>
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-pri btn-full" onclick="reset()">New Payment</button>
+</div>
+</div>
+</div><!-- /#app-main -->
+
+<!-- ═══ MODALS ═══ -->
+<div class="modal-full hide" id="cam-modal">
+  <div class="cam-topbar">
+    <span class="cam-title">Scan QR Code</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="cam-btn" id="torch-btn" onclick="toggleTorch()" style="display:none;" aria-label="Toggle Flash"><svg class="icn"><use href="#ic-bolt"></use></svg></button>
+      <button class="cam-close" onclick="closeCam()" aria-label="Close Scanner"><svg class="icn"><use href="#ic-x"></use></svg></button>
+    </div>
+  </div>
+  <div class="cam-body">
+    <video id="scan-video" autoplay playsinline muted></video>
+    <canvas id="scan-canvas" style="display:none;"></canvas>
+    <div class="scan-frame" id="scan-frame">
+      <div class="corner c-tl"></div><div class="corner c-tr"></div>
+      <div class="corner c-bl"></div><div class="corner c-br"></div>
+    </div>
+    <div class="cam-hint">Point at a UPI QR code</div>
+  </div>
+</div>
+
+<div class="modal hide" id="qr-modal" onclick="bgClickModal('qr-modal')">
+  <div class="msheet" style="text-align: center;">
+    <div class="shandle"></div>
+    <div class="stitle">Scan to Pay</div>
+    <div class="ssub" id="qr-sub">Scan this QR with any UPI app</div>
+    <div id="qr-box" style="display:inline-block; padding:20px; background:#fff; border:2px solid var(--bdr); border-radius:12px; margin-bottom:24px;"></div>
+    <button class="btn btn-pri btn-full" onclick="closeModal('qr-modal')">Close</button>
+  </div>
+</div>
+
+<div class="modal hide" id="confirm-modal" onclick="bgClickModal('confirm-modal')">
+  <div class="msheet">
+    <div class="shandle"></div>
+    <div class="stitle" id="sh-title">Payment Status</div>
+    <div class="ssub" id="sh-sub">Did the transaction complete successfully?</div>
+    <div class="sbtns" id="sbtns">
+      <button class="btn btn-ghost" style="color:var(--err);" onclick="onConfirm(false)"><svg class="icn" style="display:inline-block;"><use href="#ic-x"></use></svg> Failed</button>
+      <button class="btn btn-pri" onclick="onConfirm(true)"><svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg> Paid</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<!-- QR engine + generator — bundled locally so scanning works offline -->
+<script src="js/jsQR.min.js"></script>
+<script src="js/qrcode.min.js"></script>
+
+<script>
+// ─── STATE ───
+const S = {
+  total:0, upi:'', name:'', note:'', splits:[], splitMode:'equal', customParts:null,
+  paid:[], failed:[], refs:[], mode:'auto', turbo:true, cur:0, running:false, awaiting:false,
+  confirmFor:'auto', cdTimer:null, mPendingIdx:-1
+};
+
+// ─── THEME & UTILS ───
+function toggleTheme(){
+  haptic('light');
+  const r = document.documentElement;
+  const current = r.getAttribute('data-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  r.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+}
+
+function haptic(t='light'){if(navigator.vibrate){const p={light:15,medium:30,heavy:[40,30,40],error:[50,50,50]};navigator.vibrate(p[t]||15);}}
+
+let toastTimer;
+function toast(msg, err=false){
+  haptic(err?'error':'light');
+  const t=document.getElementById('toast');
+  clearTimeout(toastTimer);
+  document.getElementById('toast-msg').textContent = msg;
+  const icn = t.querySelector('.icn use');
+  icn.setAttribute('href', err ? '#ic-x' : '#ic-check');
+  t.style.background = err ? 'var(--surf2)' : 'var(--ink)';
+  t.style.color = err ? 'var(--ink)' : 'var(--bg)';
+  t.style.borderColor = err ? 'var(--err)' : 'var(--bdr)';
+  t.classList.add('show');
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function shakeEl(id){const el=document.getElementById(id);if(!el)return;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');haptic('error');}
+function validateUPI(v){return/^[a-zA-Z0-9.\-_+]+@[a-zA-Z0-9]+$/.test(v.trim());}
+/* HTML-escape user-controlled strings (payee name/UPI from QR scans) before
+   they touch innerHTML — blocks script injection via malicious QR codes. */
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function makeRef(p){return'LGR'+Date.now().toString(36).slice(-4).toUpperCase()+'P'+p;}
+
+// ─── SCREEN NAV & MODALS ───
+function goTo(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('sc'+n);if(el)el.classList.add('active');
+  var appMain=document.getElementById('app-main');
+  if(appMain){var w=appMain.querySelector('.screen.active .wrap');if(w)w.scrollTop=0;}
+  const stMap={'1':1,'2':2,'3':3,'4a':4,'4b':4,'5':5};
+  const c=stMap[String(n)]||+n;
+  [1,2,3,4].forEach(i=>{
+    const d=document.getElementById('sd'+i);if(!d)return;
+    d.classList.remove('act','done');
+    if(i<c||(c===5&&i===4))d.classList.add('done');
+    else if(i===c)d.classList.add('act');
+    const l=document.getElementById('sl'+i+(i+1));if(l)l.classList.toggle('done',i<c||(c===5));
+  });
+}
+
+function closeModal(id){document.getElementById(id).classList.add('hide');}
+function bgClickModal(id){if(event.target.id===id)closeModal(id);}
+function showConfirmSheet(title,sub,forMode){
+  S.confirmFor=forMode;
+  document.getElementById('sh-title').textContent=title;
+  document.getElementById('sh-sub').textContent=sub;
+  document.getElementById('confirm-modal').classList.remove('hide');
+  haptic('medium');
+}
+function onConfirm(ok){
+  closeModal('confirm-modal');
+  if(S.confirmFor==='manual')doManualConfirm(ok);
+  else doAutoConfirm(ok);
+}
+
+// ─── UPI LOGIC ───
+function upiTab(t){
+  haptic('light');
+  ['scan','type'].forEach(x=>{
+    document.getElementById('t-'+x).classList.toggle('on',x===t);
+    document.getElementById('tp-'+x).classList.toggle('on',x===t);
+  });
+}
+async function pasteUPI(){
+  haptic('light');
+  let text='';
+  try{
+    if(navigator.clipboard&&navigator.clipboard.readText){text=await navigator.clipboard.readText();}
+    else{text=prompt('Paste UPI ID or link:');}
+  }catch(e){text=prompt('Paste your UPI ID:');}
+  if(text&&text.trim()){
+    if(text.includes('pa=')||text.startsWith('upi://')){handleScan(text);}
+    else{document.getElementById('iupi').value=text.trim();}
+  }
+}
+
+function toStep2(){
+  S.upi=document.getElementById('iupi').value.trim();
+  S.name=document.getElementById('iname').value.trim();
+  if(!S.upi){shakeEl('iupi');toast('Enter or scan a UPI ID',true);return;}
+  if(!validateUPI(S.upi)){shakeEl('iupi');toast('Invalid UPI format',true);return;}
+  const dName=S.name||(S.upi.split('@')[0].charAt(0).toUpperCase()+S.upi.split('@')[0].slice(1));
+  document.getElementById('pb-name').textContent=dName;
+  document.getElementById('pb-upi-val').textContent=S.upi;
+  document.getElementById('pb-av').textContent=dName.charAt(0).toUpperCase();
+  goTo(2);haptic('medium');
+}
+
+// ─── CHIPS / AMOUNT ───
+// App cap: ₹10,000 per transaction (product decision — keeps installment
+// sequences short). Split math itself still respects the ₹1,999 MDR limit.
+const AMT_MAX=10000;
+function sanitizeAmount(el){
+  let v=parseFloat(el.value);
+  if(!isFinite(v)||v<0){el.value='';syncChips();return;}
+  if(v>AMT_MAX){el.value=AMT_MAX;toast('Max amount ₹'+AMT_MAX.toLocaleString('en-IN'),true);}
+  syncChips();
+}
+function sa(v){haptic('light');document.getElementById('iamt').value=v;syncChips();}
+function syncChips(){
+  const v=parseFloat(document.getElementById('iamt').value)||0;
+  const map=[2500,5000,10000];
+  document.querySelectorAll('.chip').forEach((c,i)=>c.classList.toggle('on',map[i]===v));
+}
+
+// ─── SPLIT ALGOS ───
+function toStep3(){
+  // Integer rupees only — keeps every split mathematically exact (no float dust)
+  let total=Math.floor(parseFloat(document.getElementById('iamt').value)||0);
+  if(!total||total<=0){shakeEl('iamt');toast('Enter a valid amount',true);return;}
+  if(total>AMT_MAX){total=AMT_MAX;document.getElementById('iamt').value=AMT_MAX;toast('Capped at ₹'+AMT_MAX.toLocaleString('en-IN'),true);}
+  S.total=total;S.note=document.getElementById('inote').value.trim();
+  S.customParts=getMin(total);S.splitMode='equal';
+  S.splits=equalSplit(total,S.customParts);
+  S.paid=S.splits.map(()=>false);S.failed=S.splits.map(()=>false);S.refs=S.splits.map((_,i)=>makeRef(i+1));
+  document.getElementById('sc-val').textContent=S.customParts;
+  document.getElementById('st-eq').classList.add('on');document.getElementById('st-rnd').classList.remove('on');
+  document.getElementById('reshuffle-btn').style.display='none';
+  renderPreview();goTo(3);haptic('medium');
+}
+
+const MAX_PART = 1999;
+function getMin(total){return Math.max(1,Math.ceil(total/MAX_PART));}
+function getMaxParts(total){return Math.max(1,Math.min(200,Math.floor(total)));}
+function clampPartCount(total,n){
+  const min=getMin(total), max=getMaxParts(total);
+  n=Math.floor(Number(n)||min);
+  return Math.max(min,Math.min(max,n));
+}
+
+/* Split `rem` into k parts of equal base with the leftover ₹1s spread over
+   the first parts (e.g. 100/3 → [34,33,33] instead of [33,33,34]). */
+function evenParts(rem,k){
+  const base=Math.floor(rem/k);let left=rem-base*k;
+  return Array.from({length:k},()=>{const v=base+(left>0?1:0);if(left>0)left--;return v;});
+}
+function equalSplit(total,n){
+  n=clampPartCount(total,n);if(n<=1)return[total];
+  return evenParts(total,n);
+}
+
+/* ── Distinct random split ──────────────────────────────────────────────
+   Rule: NO two parts may share the same amount.
+
+   Construction (always valid, O(n), no retries, no dead ends):
+     part_i = i + x_i  where x is a NON-DECREASING random composition of
+       E = total − n(n+1)/2   with every x_i ≤ C = 1999 − n.
+     Non-decreasing x ⇒ strictly increasing parts ⇒ all amounts UNIQUE.
+     x_n ≤ 1999−n ⇒ part_n ≤ 1999; part_1 ≥ 1. Σ parts = total exactly.
+
+   Feasibility of n distinct parts in [1,1999]:
+     min possible sum = 1+2+…+n            → n(n+1)/2 ≤ total
+     max possible sum = 1999+1998+…        → total ≤ n(3999−n)/2
+   e.g. ₹10,000 needs ≥ 6 parts (5 parts cap out at ₹9,985).
+   distinctBounds() returns the feasible part-count band; callers clamp
+   into it so the slider/plan never produces an impossible request. */
+function distinctBounds(total){
+  let nMin=1;while(nMin<1999&&nMin*(3999-nMin)/2<total)nMin++;
+  let nMax=Math.min(200,1999,Math.floor((Math.sqrt(8*total+1)-1)/2));
+  if(nMax<nMin)nMax=nMin;
+  return[nMin,nMax];
+}
+function clampPartsForMode(total,n,mode){
+  if(mode==='random'){
+    const[a,b]=distinctBounds(total);
+    return Math.max(a,Math.min(b,Math.floor(Number(n)||a)));
+  }
+  return clampPartCount(total,n);
+}
+function randomSplit(total,n){
+  const[loN,hiN]=distinctBounds(total);
+  n=Math.max(loN,Math.min(hiN,Math.floor(Number(n)||loN)));
+  if(n<=1)return[total];
+  const E=total-n*(n+1)/2;      // ≥ 0 and ≤ n·(1999−n) by feasibility
+  const C=1999-n;               // cap for every x slot (x_n binds the rest)
+  const xs=new Array(n);let rem=E;
+  for(let i=0;i<n;i++){
+    const left=n-i;
+    const lo=Math.max(0,rem-(left-1)*C);   // leave enough for remaining slots
+    const hi=Math.min(C,rem);               // never exceed the slot cap
+    xs[i]=Math.round(lo+Math.random()*(hi-lo));
+    rem-=xs[i];
+  }
+  xs.sort((a,b)=>a-b);          // non-decreasing ⇒ strictly increasing parts
+  return xs.map((x,i)=>i+1+x);
+}
+function adjParts(d){
+  haptic('light');
+  const min=getMin(S.total);
+  let max=getMaxParts(S.total);
+  if(S.splitMode==='random'){
+    const[a,b]=distinctBounds(S.total);
+    max=Math.max(min,b);
+  }
+  let cur=(S.customParts||min)+d;
+  if(cur<min){toast(`Minimum ${min} parts required`,true);cur=min;}
+  if(cur>max){toast(`Maximum ${max} parts for ₹${S.total.toLocaleString('en-IN')}`,true);cur=max;}
+  S.customParts=cur;document.getElementById('sc-val').textContent=cur;
+  S.splits=S.splitMode==='random'?randomSplit(S.total,cur):equalSplit(S.total,cur);
+  S.refs=S.splits.map((_,i)=>makeRef(i+1));
+  renderPreview();
+}
+function setSplitMode(m){
+  haptic('light');S.splitMode=m;
+  S.customParts=clampPartsForMode(S.total,S.customParts||getMin(S.total),m);
+  document.getElementById('sc-val').textContent=S.customParts;
+  document.getElementById('st-eq').classList.toggle('on',m==='equal');
+  document.getElementById('st-rnd').classList.toggle('on',m==='random');
+  document.getElementById('reshuffle-btn').style.display=m==='random'?'':'none';
+  S.splits=m==='equal'?equalSplit(S.total,S.customParts):randomSplit(S.total,S.customParts);
+  renderPreview();
+}
+function reshuffle(){haptic('medium');S.customParts=clampPartsForMode(S.total,S.customParts||getMin(S.total),'random');S.splits=randomSplit(S.total,S.customParts);document.getElementById('sc-val').textContent=S.customParts;renderPreview();toast('Amounts reshuffled');}
+function renderPreview(){
+  const max=Math.max(...S.splits);
+  document.getElementById('split-preview').innerHTML=S.splits.map((a,i)=>`
+    <div class="spi">
+      <div class="spi-n">${i+1}</div>
+      <div class="spi-amt"><input type="tel" inputmode="numeric" value="${a}" onchange="editPart(${i},this.value)" style="border-color:${a>1999?'var(--err)':a<1?'var(--err)':'var(--bdr)'}"></div>
+      <div class="spi-bar-wrap"><div class="spi-bar" style="width:${(a/max*100).toFixed(1)}%"></div></div>
+    </div>`).join('');
+  const sum=S.splits.reduce((a,v)=>a+v,0);
+  const dup=S.splitMode==='random'&&new Set(S.splits).size!==S.splits.length;
+  const ok=sum===S.total&&S.splits.every(p=>p>=1&&p<=MAX_PART)&&!dup;
+  const el=document.getElementById('sum-check');
+  el.className='sum-check '+(ok?'ok':'err');
+  el.innerHTML=ok?`<svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> ₹${S.total.toLocaleString('en-IN')} via ${S.splits.length} parts`:(dup?`<svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-x"></use></svg> Duplicate amounts — every part must be unique`:`<svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-x"></use></svg> Sum Mismatch: ₹${sum.toLocaleString('en-IN')}`);
+}
+function editPart(idx,raw){
+  const v=Math.max(1,parseInt(raw)||0);S.splits[idx]=v;
+  if(idx!==S.splits.length-1){
+    const others=S.splits.reduce((a,x,i)=>i===S.splits.length-1?a:a+x,0);
+    // Exact remainder — even if <1, so the sum-check (not silent rounding)
+    // tells the user to fix the imbalance. startPay() blocks invalid plans.
+    S.splits[S.splits.length-1]=S.total-others;
+    const inputs=document.getElementById('split-preview').querySelectorAll('input');
+    if(inputs[S.splits.length-1])inputs[S.splits.length-1].value=S.splits[S.splits.length-1];
+  }
+  renderPreview();
+}
+
+// ─── PAYMENTS ───
+function mkLink(amt,part,ref){
+  const qs=new URLSearchParams({pa:S.upi,pn:S.name||'Merchant',am:amt.toFixed(2),cu:'INR',tn:(S.note||'Ledger')+' P'+part+'/'+S.splits.length,tr:ref}).toString();
+  return'upi://pay?'+qs;
+}
+
+function pickMode(k){
+  haptic('light');S.mode=k;
+  document.getElementById('mc-auto').classList.toggle('on',k==='auto');
+  document.getElementById('mc-man').classList.toggle('on',k==='manual');
+  document.getElementById('turbo-row').style.display=k==='auto'?'flex':'none';
+}
+
+function startPay(){
+  if(S.splits.some(p=>p>MAX_PART)){toast('Fix parts over ₹'+MAX_PART+' first',true);return;}
+  if(S.splits.some(p=>p<1)){toast('Every part must be at least ₹1',true);return;}
+  if(S.splits.reduce((a,v)=>a+v,0)!==S.total){toast('Parts do not match total',true);return;}
+  if(S.splitMode==='random'&&new Set(S.splits).size!==S.splits.length){toast('Random plan: every part needs a different amount',true);return;}
+  haptic('heavy');
+  S.turbo=document.getElementById('turbo-chk').checked;
+  S.cur=0;S.running=true;S.awaiting=false;
+  S.paid=S.splits.map(()=>false);S.failed=S.splits.map(()=>false);S.refs=S.splits.map((_,i)=>makeRef(i+1));
+  
+  document.getElementById('a-lbl').textContent=S.turbo?'Turbo Sequence':'Auto Progress';
+  if(S.mode==='auto'){goTo('4a');buildDots('a-dots');runPart(0);}
+  else{goTo('4b');buildDots('m-dots');buildManualList();document.getElementById('m-count').textContent='0/'+S.splits.length;}
+}
+
+function buildDots(id){
+  const c=document.getElementById(id);c.innerHTML='';
+  S.splits.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' cur':'');d.id=id+'-d'+i;c.appendChild(d);});
+}
+function refreshDots(id){
+  S.splits.forEach((_,i)=>{
+    const d=document.getElementById(id+'-d'+i);if(!d)return;
+    d.className='dot';
+    if(S.paid[i])d.classList.add('ok');
+    else if(S.failed[i])d.classList.add('fail');
+    else if(i===S.cur)d.classList.add('cur');
+  });
+}
+
+// ─── DYNAMIC QR CODE INJECTOR ───
+function drawQR(link) {
+  const box = document.getElementById('qr-box');
+  box.innerHTML = '';
+  new QRCode(box, {
+    text: link,
+    width: 200,
+    height: 200,
+    colorDark : "#000000",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.M
+  });
+  document.getElementById('qr-modal').classList.remove('hide');
+}
+function openCurQR() { haptic('light'); drawQR(mkLink(S.splits[S.cur], S.cur+1, S.refs[S.cur])); }
+function showManualQR(i) { haptic('light'); drawQR(mkLink(S.splits[i], i+1, S.refs[i])); }
+
+// EXPLICIT DONE ACTIONS
+function markCurDone() { haptic('medium'); doAutoConfirm(true); }
+function mDone(i) { haptic('medium'); S.mPendingIdx = i; doManualConfirm(true); }
+
+// ─── AUTO MODE RUNNER ───
+function runPart(i){
+  if(i>=S.splits.length){finish();return;}
+  S.cur=i;
+  const amt=S.splits[i],ref=S.refs[i];
+  document.getElementById('a-count').textContent=(i+1)+'/'+S.splits.length;
+  document.getElementById('a-ppart').textContent='Part '+(i+1)+' of '+S.splits.length;
+  document.getElementById('a-pamt').textContent='₹'+amt.toLocaleString('en-IN');
+  document.getElementById('a-psub').textContent='of ₹'+S.total.toLocaleString('en-IN')+' total';
+  
+  const btn=document.getElementById('a-link');
+  btn.href=mkLink(amt,i+1,ref);
+  
+  document.getElementById('a-retry').style.display='none';
+  document.getElementById('a-paybig').style.display='block';
+  document.getElementById('a-cd').style.display='none';
+  document.getElementById('a-ts').style.display='none';
+  
+  refreshDots('a-dots');
+  S.awaiting=true;
+}
+
+function onOpen(){haptic('light');S.awaiting=true;}
+
+function retryCur(){
+  haptic('light');
+  const link = mkLink(S.splits[S.cur], S.cur+1, S.refs[S.cur]);
+  const a = document.createElement('a');
+  a.href = link;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  S.awaiting=true;
+  document.getElementById('a-retry').style.display='flex';
+}
+
+function onVisReturn(){
+  if(!S.awaiting||!S.running)return;
+  S.awaiting=false;clearInterval(S.cdTimer);
+  if(S.mode==='auto'){
+    document.getElementById('a-cd').style.display='none';
+    document.getElementById('a-ts').style.display='none';
+    document.getElementById('a-paybig').style.display='block';
+    if(S.turbo&&S.cur>0){
+        setTimeout(()=>{
+            S.paid[S.cur]=true;refreshDots('a-dots');
+            const n=S.cur+1;
+            if(n>=S.splits.length){finish();}else{launchTurbo(n);}
+        },350);
+    }
+    else{setTimeout(()=>showConfirmSheet('Part '+(S.cur+1)+' done?','Did ₹'+S.splits[S.cur].toLocaleString('en-IN')+' process successfully?','auto'),450);}
+  }else{
+    if(S.mPendingIdx>=0){
+      const idx=S.mPendingIdx;S.mPendingIdx=-1;
+      setTimeout(()=>showConfirmSheet('Part '+(idx+1)+' done?','Did ₹'+S.splits[idx].toLocaleString('en-IN')+' process successfully?','manual'),450);
+    }
+  }
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')onVisReturn();});
+window.addEventListener('focus',onVisReturn);
+
+function doAutoConfirm(ok){
+  const i=S.cur;S.paid[i]=ok;S.failed[i]=!ok;
+  if(!ok){document.getElementById('a-retry').style.display='flex';toast('Marked as failed',true);haptic('error');return;}
+  haptic('medium');
+  const n=i+1;refreshDots('a-dots');
+  if(n>=S.splits.length){finish();return;}
+  if(S.turbo){launchTurbo(n);}else{startCountdown(n);}
+}
+
+// ─── AUTO-LAUNCH FIX ───
+function launchTurbo(nextI){
+  document.getElementById('a-paybig').style.display='none';
+  const ts=document.getElementById('a-ts');ts.style.display='block';
+  document.getElementById('ts-ttl').textContent='Part '+(nextI+1)+' launching';
+  const f=document.getElementById('ts-fill');f.style.animation='none';f.offsetHeight;f.style.animation='';
+  
+  setTimeout(() => {
+    runPart(nextI);
+    // Simulating DOM Anchor Click for high reliability on mobile
+    const link = mkLink(S.splits[nextI], nextI+1, S.refs[nextI]);
+    const a = document.createElement('a');
+    a.href = link;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }, 850);
+}
+
+function startCountdown(nextI){
+  document.getElementById('a-paybig').style.display='none';
+  document.getElementById('a-cd').style.display='block';
+  let v=3;document.getElementById('a-cdnum').textContent=v;
+  S.cdTimer=setInterval(()=>{v--;document.getElementById('a-cdnum').textContent=v;if(v<=0){clearInterval(S.cdTimer);runPart(nextI);}},1000);
+}
+
+function pauseAuto(){haptic('light');clearInterval(S.cdTimer);document.getElementById('a-cd').style.display='none';document.getElementById('a-paybig').style.display='block';S.awaiting=true;toast('Sequence Paused');}
+
+// ─── MANUAL MODE RUNNER ───
+function buildManualList(){
+  const list=document.getElementById('mlist');list.innerHTML='';
+  S.splits.forEach((amt,i)=>{
+    const div=document.createElement('div');div.className='mi'+(i===0?' cur':'');div.id='mi'+i;
+    const link=mkLink(amt,i+1,S.refs[i]);
+    div.innerHTML=`
+      <div class="mi-num" id="mn${i}">${i+1}</div>
+      <div class="mi-body">
+        <div class="mi-amt">₹${amt.toLocaleString('en-IN')}</div>
+        <div class="mi-ref">Ref: ${S.refs[i]}</div>
+      </div>
+      <div id="mia${i}" style="display:flex; gap:8px;">
+        ${i===0
+          ? `<button class="btn btn-ghost btn-sm" style="padding:12px; border-radius:6px;" onclick="showManualQR(${i})"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-qr"></use></svg></button>
+             <a href="${link}" class="btn btn-pri btn-sm" style="padding:12px 16px; border-radius:6px;" onclick="mPay(${i})">Pay</a>
+             <button class="btn btn-ghost btn-sm" style="padding:12px; border-radius:6px; color:var(--ok); border-color:var(--ok);" onclick="mDone(${i})"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg></button>`
+          : '<span class="btn btn-ghost btn-sm" style="opacity:0.3;pointer-events:none; padding:12px 16px;">Wait</span>'}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+function mPay(i){haptic('light');S.mPendingIdx=i;S.awaiting=true;}
+
+function doManualConfirm(ok){
+  const i=S.mPendingIdx>=0?S.mPendingIdx:S.cur;
+  S.mPendingIdx=-1;
+  S.paid[i]=ok;S.failed[i]=!ok;haptic(ok?'medium':'error');
+  const num=document.getElementById('mn'+i);const item=document.getElementById('mi'+i);
+  item.classList.remove('cur');item.classList.add(ok?'ok':'fail');
+  num.innerHTML=ok?'<svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg>':'<svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-x"></use></svg>';
+  const done=S.paid.filter(Boolean).length;
+  document.getElementById('m-count').textContent=done+'/'+S.splits.length;
+  refreshDots('m-dots');
+  const next=i+1;
+  if(next>=S.splits.length){setTimeout(finish,350);return;}
+  const ni=document.getElementById('mi'+next);ni.classList.add('cur');
+  ni.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const nl=mkLink(S.splits[next],next+1,S.refs[next]);
+  document.getElementById('mia'+next).innerHTML=`
+    <button class="btn btn-ghost btn-sm" style="padding:12px; border-radius:6px;" onclick="showManualQR(${next})"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-qr"></use></svg></button>
+    <a href="${nl}" class="btn btn-pri btn-sm" style="padding:12px 16px; border-radius:6px;" onclick="mPay(${next})">Pay</a>
+    <button class="btn btn-ghost btn-sm" style="padding:12px; border-radius:6px; color:var(--ok); border-color:var(--ok);" onclick="mDone(${next})"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg></button>`;
+  toast(ok?'Next unlocked':'Marked failed',!ok);
+}
+
+async function skipCur(){
+  const ok=window.appConfirm?await window.appConfirm('Skip Part','Skip part '+(S.cur+1)+' of '+S.splits.length+'?','Skip','Keep'):confirm('Skip part '+(S.cur+1)+'?');
+  if(!ok)return;S.failed[S.cur]=true;S.awaiting=false;clearInterval(S.cdTimer);const n=S.cur+1;if(n>=S.splits.length){finish();return;}if(S.turbo)launchTurbo(n);else runPart(n);}
+async function cancelAll(){
+  const ok=window.appConfirm?await window.appConfirm('Cancel Sequence','Cancel the entire payment sequence?','Cancel','Keep Going'):confirm('Cancel entire sequence?');
+  if(!ok)return;S.running=false;S.awaiting=false;clearInterval(S.cdTimer);goTo(1);}
+// Hardware back during execution → route through the same confirmations
+// instead of instantly killing the sequence (or triggering native exit).
+function onAppBack(){
+  try{
+  // 1. Close the top-most overlay first (camera scanner, QR sheet, confirm sheet)
+  var cam=document.getElementById('cam-modal');
+  if(cam&&!cam.classList.contains('hide')){closeCam();return true;}
+  var qrm=document.getElementById('qr-modal');
+  if(qrm&&!qrm.classList.contains('hide')){closeModal('qr-modal');return true;}
+  var cfm=document.getElementById('confirm-modal');
+  if(cfm&&!cfm.classList.contains('hide')){closeModal('confirm-modal');return true;}
+  // 2. While a sequence runs, ask before killing it
+  if(S.running){
+    if(S.mode==='manual'||S.awaiting){cancelAll();return true;}
+    return false;                              // countdown/turbo flight → native exit popup
+  }
+  return false;                                // not running → native exit popup
+  }catch(e){return false;}                     // any JS error → native exit popup
+}
+
+// ─── MDR SAVINGS ALGORITHM (OCT 2026 NPCI RULES) ───
+function calcGovtSavings(totalAmount) {
+  // Free up to 2000. Above 2000 attracts 0.4% MDR capped at 300 INR.
+  if (totalAmount <= 2000) return 0;
+  let fee = totalAmount * 0.004;
+  return Math.min(fee, 300);
+}
+
+// ─── FINISH ───
+function finish(){
+  haptic('heavy');S.running=false;S.awaiting=false;clearInterval(S.cdTimer);
+  const pn=S.paid.filter(Boolean).length;
+  const pa=S.splits.filter((_,i)=>S.paid[i]).reduce((a,v)=>a+v,0);
+  document.getElementById('d-total').textContent='₹'+pa.toLocaleString('en-IN');
+  document.getElementById('d-parts').textContent=pn+'/'+S.splits.length;
+  document.getElementById('d-title').textContent=pn===S.splits.length?'Payment Complete':'Partial Payment';
+  document.getElementById('d-sub').textContent=pn===S.splits.length?'Sequence finished successfully.':'Some parts were skipped or failed.';
+  
+  // Inject Savings Logic
+  const savingsAmount = calcGovtSavings(S.total);
+  if(savingsAmount > 0) {
+      document.getElementById('d-savings-card').style.display = 'block';
+      document.getElementById('d-savings-val').textContent = '₹' + savingsAmount.toFixed(2);
+  } else {
+      document.getElementById('d-savings-card').style.display = 'none';
+  }
+
+  const rec=document.getElementById('d-receipt');
+  rec.innerHTML=`
+    <div class="receipt-row"><span class="label">Payee</span><span class="val">${esc(S.name||S.upi)}</span></div>
+    <div class="receipt-row"><span class="label">Total</span><span class="val">₹${S.total.toLocaleString('en-IN')}</span></div>
+    ${S.splits.map((a,i)=>`<div class="receipt-row"><span class="label">Part ${i+1}</span><span class="val">₹${a.toLocaleString('en-IN')}${S.paid[i]?'✓':S.failed[i]?'✕':''}</span></div>`).join('')}`;
+  goTo(5);
+}
+
+// ─── SHARE & RESET ───
+function buildReceipt(){
+  const pn=S.paid.filter(Boolean).length;
+  return`SplitPay Ledger\n───────────────\nPayee: ${S.name||S.upi}\nUPI ID: ${S.upi}\nTotal: ₹${S.total.toLocaleString('en-IN')}\nParts: ${pn}/${S.splits.length} Complete\n${S.splits.map((a,i)=>` [${i+1}] ₹${a.toLocaleString('en-IN')}${S.paid[i]?'✓':S.failed[i]?'✕':'-'}`).join('\n')}\n───────────────`;
+}
+function shareWA(){
+  const txt=S.total>0?buildReceipt():`SplitPay Ledger — Smart Installments`;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
+}
+function copyReceipt(){navigator.clipboard?.writeText(buildReceipt()).then(()=>toast('Record Copied')).catch(()=>toast('Copy Failed',true));}
+
+function reset(){
+  Object.assign(S,{total:0,upi:'',name:'',note:'',splits:[],splitMode:'equal',customParts:null,paid:[],failed:[],refs:[],mode:'auto',turbo:true,cur:0,running:false,awaiting:false,cdTimer:null,mPendingIdx:-1});
+  ['iamt','iupi','iname','inote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  pickMode('auto');
+  document.getElementById('turbo-chk').checked=true;
+  syncChips();upiTab('scan');goTo(1);haptic('medium');
+}
+
+// ─── CAMERA LOGIC ───
+let camStream=null,camRunning=false,camTorchOn=false;
+function openCam(){
+  haptic('medium');
+  if(!window.isSecureContext){toast('Camera requires HTTPS',true);return;}
+  if(!navigator.mediaDevices?.getUserMedia){toast('Camera blocked. Use File Upload.',true);return;}
+  document.getElementById('cam-modal').classList.remove('hide');
+  const tries=[{video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}},{video:{facingMode:'environment'}},{video:true}];
+  async function attempt(n){
+    if(n>=tries.length){toast('Camera access denied',true);closeCam();return;}
+    try{const s=await navigator.mediaDevices.getUserMedia(tries[n]);camStream=s;camRunning=true;camTorchOn=false;const v=document.getElementById('scan-video');v.srcObject=s;await v.play().catch(()=>{});setupTorch();requestAnimationFrame(scanFrame);}
+    catch(e){attempt(n+1);}
+  }
+  // WebChromeClient handles Android CAMERA permission for getUserMedia().
+  attempt(0);
+}
+/* Lightweight scan loop: decodes a DOWNSCALED frame ~8 times per second via
+   setTimeout (not per animation frame). This keeps the UI at full frame-rate
+   while using only a fraction of the CPU. */
+function scanFrame(){
+  if(!camRunning)return;
+  if(document.getElementById('cam-modal').classList.contains('hide')){setTimeout(scanFrame,300);return;}
+  const v=document.getElementById('scan-video');
+  if(v.readyState<v.HAVE_ENOUGH_DATA){setTimeout(scanFrame,120);return;}
+  const c=document.getElementById('scan-canvas');
+  const scale=Math.min(1,480/(v.videoWidth||480));
+  const w=Math.max(1,Math.round((v.videoWidth||480)*scale));
+  const h=Math.max(1,Math.round((v.videoHeight||360)*scale));
+  c.width=w;c.height=h;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  ctx.drawImage(v,0,0,w,h);
+  const d=ctx.getImageData(0,0,w,h);
+  if(typeof jsQR!=='undefined'){
+    const code=jsQR(d.data,w,h,{inversionAttempts:'dontInvert'});
+    if(code&&code.data){haptic('heavy');handleScan(code.data);return;}
+  }
+  setTimeout(scanFrame,120);
+}
+function closeCam(){camRunning=false;if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}camTorchOn=false;const tb=document.getElementById('torch-btn');if(tb)tb.style.display='none';document.getElementById('cam-modal').classList.add('hide');}
+function toggleTorch(){
+  if(!camStream)return;
+  camTorchOn=!camTorchOn;
+  const track=camStream.getVideoTracks()[0];
+  if(track&&typeof track.applyConstraints==='function'){
+    track.applyConstraints({advanced:[{torch:camTorchOn}]}).catch(()=>{});
+  }
+  const b=document.getElementById('torch-btn');if(b)b.classList.toggle('on',camTorchOn);
+}
+function setupTorch(){
+  try{
+    const track=camStream&&camStream.getVideoTracks()[0];
+    const caps=track&&track.getCapabilities?track.getCapabilities():null;
+    const b=document.getElementById('torch-btn');
+    if(caps&&caps.torch&&b){b.style.display='flex';}
+  }catch(e){}
+}
+function scanUpload(input){
+  if(!input.files?.[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const d=ctx.getImageData(0,0,c.width,c.height);if(typeof jsQR!=='undefined'){const code=jsQR(d.data,d.width,d.height);if(code?.data){handleScan(code.data);}else{toast('No QR found in image',true);}}};img.src=e.target.result;};
+  reader.readAsDataURL(input.files[0]);
+}
+function handleScan(data){
+  closeCam();if(!data?.trim())return;
+  data=data.trim();
+  try{
+    let pa='',pn='',am='';
+    if(data.includes('pa=')||data.startsWith('upi://')){
+      const qs=data.includes('?')?data.split('?')[1]:data;
+      const p=new URLSearchParams(qs);
+      pa=p.get('pa')||'';pn=p.get('pn')||'';am=p.get('am')||'';
+    }else if(validateUPI(data)){pa=data;}
+    else{const m=data.match(/[a-zA-Z0-9.\-_+]+@[a-zA-Z0-9]+/);if(m)pa=m[0];}
+    if(pa){
+      document.getElementById('iupi').value=pa;
+      if(pn)document.getElementById('iname').value=String(pn).slice(0,50);
+      if(am){document.getElementById('iamt').value=am;syncChips();}
+      upiTab('type');
+      toast('QR Scanned Successfully');
+      haptic('medium');
+    }else{toast('No UPI ID found',true);}
+  }catch(e){toast('Could not decode QR',true);}
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ANDROID NATIVE BRIDGE INTEGRATION
+// Patches run-time behaviour when inside the Android app.
+// ═══════════════════════════════════════════════════════════
+(function() {
+  // Wait until DOM is ready
+  function applyPatches() {
+    if (!window.AndroidBridge) return; // Not in Android app — skip
+
+    // ── 1. Clipboard paste via native Android clipboard ──────────────
+    var _pasteUPIWeb = window.pasteUPI;
+    window.pasteUPI = async function() {
+      haptic('light');
+      var text = '';
+      try { text = window.AndroidBridge.getClipboardText() || ''; } catch(e) {}
+      if (!text) {
+        // Fallback to web clipboard API or prompt
+        try { text = await navigator.clipboard.readText(); } catch(e) {}
+      }
+      if (text && text.trim()) {
+        text = text.trim();
+        if (text.includes('pa=') || text.startsWith('upi://')) {
+          handleScan(text);
+        } else {
+          document.getElementById('iupi').value = text;
+          upiTab('type');
+        }
+      } else if (_pasteUPIWeb) {
+        _pasteUPIWeb();
+      }
+    };
+
+    // ── 2. Native Share sheet instead of window.open WhatsApp ─────────
+    var _shareWAWeb = window.shareWA;
+    window.shareWA = function() {
+      var txt = S.total > 0 ? buildReceipt() : 'SplitPay — Smart UPI Installment Splitter';
+      try {
+        window.AndroidBridge.shareText(txt);
+      } catch(e) {
+        if (_shareWAWeb) _shareWAWeb();
+      }
+    };
+
+    // ── 3. Patch copyReceipt to use native Android clipboard ─────────
+    var _copyReceiptWeb = window.copyReceipt;
+    window.copyReceipt = function() {
+      var text = buildReceipt();
+      var copied = false;
+      // Try native bridge first (works on all Android versions)
+      try {
+        if (window.AndroidBridge.copyToClipboard) {
+          window.AndroidBridge.copyToClipboard(text);
+          toast('Record Copied');
+          copied = true;
+        }
+      } catch(e) {}
+      // Fallback to web clipboard API
+      if (!copied) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text)
+            .then(function() { toast('Record Copied'); })
+            .catch(function() { toast('Copy Failed', true); });
+        } else if (_copyReceiptWeb) {
+          _copyReceiptWeb();
+        }
+      }
+    };
+
+    // ── 4. Log successful UPI app detection ─────────────────────────────────────────────
+    try {
+      var hasUpi = window.AndroidBridge.hasUpiApp();
+      if (!hasUpi) {
+        // No UPI app installed — the UI already shows "no UPI app" dialog on tap
+      }
+    } catch(e) {}
+
+    // ── 5. Native popup helpers (custom pen & paper style dialogs) ─────
+    // Popup:   AndroidBridge.showPopup(title, msg, btn, icon)
+    // Confirm: appConfirm(title, msg, ok, cancel) → Promise<boolean>
+    // Input:   appPrompt(title, msg, prefill)     → Promise<string|null>
+    // Icons:   info | warn | question | exit | upi | rate
+    window.appPopup = function(title, msg, btn, icon) {
+      try { window.AndroidBridge.showPopup(title || 'SplitPay', msg || '', btn || 'OK', icon || 'info'); } catch(e) {}
+    };
+
+    window.appConfirm = function(title, msg, ok, cancel) {
+      return new Promise(function(resolve) {
+        if (!window.AndroidBridge || !window.AndroidBridge.showConfirmDialog) { resolve(confirm(msg || '')); return; }
+        var cb = 'cb' + Date.now() + Math.floor(Math.random() * 1e6);
+        var settled = false;
+        window['onAppDialogResult_' + cb] = function(val) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(guard);
+          resolve(!!val);
+          delete window['onAppDialogResult_' + cb];
+        };
+        // Fail-safe: if the native popup never answers (activity rebuilding,
+        // dialog failure), resolve false after 30s so buttons never freeze.
+        var guard = setTimeout(function() { window['onAppDialogResult_' + cb] && window['onAppDialogResult_' + cb](false); }, 30000);
+        window.AndroidBridge.showConfirmDialog(title || 'Confirm', msg || '', ok || 'Yes', cancel || 'No', cb);
+      });
+    };
+
+    window.appPrompt = function(title, msg, prefill) {
+      return new Promise(function(resolve) {
+        if (!window.AndroidBridge || !window.AndroidBridge.showInputDialog) { resolve(prompt(msg || '', prefill || '')); return; }
+        var cb = 'cb' + Date.now() + Math.floor(Math.random() * 1e6);
+        var settled = false;
+        window['onAppDialogResult_' + cb] = function(val) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(guard);
+          resolve(val ? String(val.value) : null);
+          delete window['onAppDialogResult_' + cb];
+        };
+        var guard = setTimeout(function() { window['onAppDialogResult_' + cb] && window['onAppDialogResult_' + cb](false); }, 30000);
+        window.AndroidBridge.showInputDialog(title || 'SplitPay', msg || '', prefill || '', cb);
+      });
+    };
+
+    // Global result dispatcher called by native code:
+    // Confirm: onAppDialogResult(callbackId, true/false)
+    // Input:   onAppDialogResult({id: callbackId, value: '...'})
+    window.onAppDialogResult = function(a, b) {
+      var id, val;
+      if (b === undefined && a && typeof a === 'object') { id = a.id; val = a; }
+      else { id = a; val = b; }
+      var fn = window['onAppDialogResult_' + id];
+      if (fn) fn(typeof val === 'object' && val !== null ? val : !!val);
+    };
+  }
+
+  // Apply immediately if AndroidBridge is already injected
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyPatches);
+  } else {
+    applyPatches();
+  }
+})();
+
+</script>
+<!-- Service Worker removed for native Android app -->
+</body>
+</html>

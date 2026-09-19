@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SplitPay brand colors — Night (Blueprint / Slate) -->
+    <color name="background">#1A1E24</color>
+    <color name="surface">#22272E</color>
+    <color name="ink">#E8E3D8</color>
+    <color name="ink_light">#B0B7C3</color>
+    <color name="surface2">#2D333B</color>
+    <color name="accent_green">#85C19F</color>
+
+    <!-- ─── Custom popup / dialog colors ─── -->
+    <color name="dialog_scrim">#B3000000</color>
+    <color name="dialog_shadow">#000000</color>
+    <color name="dialog_input_bg">#16191E</color>
+</resources>

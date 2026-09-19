@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider paths — deliberately NARROW.
+    Never expose external-path "." (whole shared storage) via a grantUriPermissions
+    provider. SplitPay shares nothing today; these paths exist only for future
+    receipt exports and point at the app's own private dirs.
+-->
+<paths>
+    <files-path
+        name="app_files"
+        path="receipts/" />
+    <cache-path
+        name="cache_files"
+        path="share/" />
+</paths>

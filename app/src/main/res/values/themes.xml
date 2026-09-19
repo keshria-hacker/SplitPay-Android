@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        SplitPay Main Theme — transparent status/nav bar so the WebView
+        content can extend edge-to-edge (the HTML handles safe areas via
+        env(safe-area-inset-*) CSS variables).
+    -->
+    <style name="Theme.SplitPay" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Window background matches app background to avoid flash -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Edge-to-edge / no title bar -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+        <!-- Material color attributes (required by MaterialComponents parent) -->
+        <item name="colorPrimary">@color/ink</item>
+        <item name="colorPrimaryVariant">@color/ink</item>
+        <item name="colorOnPrimary">@color/background</item>
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="colorOnSecondary">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/ink</item>
+    </style>
+
+    <!--
+        FIX: Splash theme now extends Theme.SplashScreen (androidx.core:core-splashscreen).
+        This provides the proper API 31+ adaptive splash screen (icon + background) and
+        eliminates the cold-start white flash on all supported API levels.
+
+        In MainActivity, call installSplashScreen() before super.onCreate().
+        The library reads postSplashScreenTheme and automatically switches to
+        Theme.SplitPay once the splash is dismissed.
+    -->
+    <style name="Theme.SplitPay.Splash" parent="Theme.SplashScreen">
+        <!-- Splash background matches the app background -->
+        <item name="windowSplashScreenBackground">@color/background</item>
+        <!-- Adaptive icon foreground used as the splash icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!-- Theme applied after splash is dismissed -->
+        <item name="postSplashScreenTheme">@style/Theme.SplitPay</item>
+    </style>
+
+</resources>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ─── Permissions ─────────────────────────────────────────────── -->
+    <!--
+        FIX: Removed android:label from <uses-permission>.
+        The android:label attribute on permissions is non-standard, not shown
+        to users on modern Android, and may trigger Play Store policy warnings.
+        The system permission dialog uses its own localised strings.
+    -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Camera feature declaration (not required but improves Play Store listing) -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+
+    <!-- ─── UPI App Queries (Android 11+ package visibility) ─────────── -->
+    <queries>
+        <!-- Allow detecting any UPI app -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+        <!-- Specific UPI apps -->
+        <package android:name="com.google.android.apps.nbu.paisa.user" />  <!-- Google Pay -->
+        <package android:name="net.one97.paytm" />                          <!-- Paytm -->
+        <package android:name="com.phonepe.app" />                          <!-- PhonePe -->
+        <package android:name="in.org.npci.upiapp" />                       <!-- BHIM -->
+        <package android:name="com.amazon.mShop.android.shopping" />        <!-- Amazon Pay -->
+        <package android:name="com.mobikwik_new" />                         <!-- MobiKwik -->
+        <package android:name="com.freecharge.android" />                   <!-- Freecharge -->
+        <package android:name="com.whatsapp" />                             <!-- WhatsApp -->
+    </queries>
+
+    <application
+        android:name=".SplitPayApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SplitPay"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="false">
+
+        <!-- ─── Main Activity ─────────────────────────────────────────── -->
+        <!--
+            FIX: Theme changed to Theme.SplitPay.Splash so that the
+            SplashScreen API (androidx.core:core-splashscreen) handles the
+            API 31+ adaptive splash and eliminates the cold-start white flash.
+            MainActivity.installSplashScreen() then switches to Theme.SplitPay.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.SplitPay.Splash">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Handle UPI callback deep links (when UPI app returns to SplitPay) -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="splitpay" />
+            </intent-filter>
+
+        </activity>
+
+        <!-- FileProvider for sharing files (future receipt export) -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

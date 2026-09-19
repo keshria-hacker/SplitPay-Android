@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        SplitPay does not make in-app network calls. Local assets are served
+        by WebViewAssetLoader over this virtual HTTPS origin. UPI and sharing
+        leave the app through Android's intent system.
+    -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Allow the virtual HTTPS asset domain used by WebViewAssetLoader -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">appassets.androidplatform.net</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

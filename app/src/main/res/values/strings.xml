@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SplitPay</string>
+    <string name="app_description">Smart UPI installment splitter for guided large payments</string>
+    <string name="dialog_input_hint">Enter value</string>
+    <string name="exit_title">Exit SplitPay?</string>
+    <string name="exit_message">Are you sure you want to exit?</string>
+    <string name="exit_yes">Exit</string>
+    <string name="exit_no">Stay</string>
+    <string name="no_upi_app_title">No UPI App Found</string>
+    <string name="no_upi_app_message">Please install a UPI payment app: Google Pay, PhonePe, Paytm, BHIM, or Amazon Pay.</string>
+    <string name="camera_denied">Camera permission denied. Use Gallery to upload a QR image instead.</string>
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+</resources>

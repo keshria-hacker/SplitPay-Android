@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    SplitPay foreground icon: three horizontal bars (split concept)
+    with a green accent dot, on transparent background.
+    Designed for use in adaptive icon (108dp canvas, 72dp safe zone).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Top bar (full width) -->
+    <path
+        android:fillColor="#E8E3D8"
+        android:pathData="M34,46 L74,46 Q76,46 76,48 L76,52 Q76,54 74,54 L34,54 Q32,54 32,52 L32,48 Q32,46 34,46 Z" />
+
+    <!-- Middle bar (shorter) -->
+    <path
+        android:fillColor="#E8E3D8"
+        android:pathData="M38,58 L70,58 Q72,58 72,60 L72,64 Q72,66 70,66 L38,66 Q36,66 36,64 L36,60 Q36,58 38,58 Z" />
+
+    <!-- Bottom bar (shortest) -->
+    <path
+        android:fillColor="#E8E3D8"
+        android:pathData="M42,70 L66,70 Q68,70 68,72 L68,76 Q68,78 66,78 L42,78 Q40,78 40,76 L40,72 Q40,70 42,70 Z" />
+
+    <!-- Green accent dot (split indicator) -->
+    <path
+        android:fillColor="#85C49F"
+        android:pathData="M35,50 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0 Z" />
+
+</vector>

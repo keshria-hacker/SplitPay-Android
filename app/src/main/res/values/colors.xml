@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SplitPay brand colors -->
+    <!-- Light theme: Pen & Paper Ink -->
+    <color name="background">#F5F2EB</color>
+    <color name="surface">#FCFAED</color>
+    <color name="ink">#1C2128</color>
+    <color name="ink_light">#555555</color>
+    <color name="surface2">#EAE5D9</color>
+    <color name="accent_green">#205938</color>
+
+    <!-- Dark theme: Blueprint / Slate -->
+    <color name="background_dark">#1A1E24</color>
+    <color name="surface_dark">#22272E</color>
+    <color name="ink_dark">#E8E3D8</color>
+    <color name="accent_green_dark">#85C49F</color>
+
+    <!-- Status bar / nav bar -->
+    <color name="status_bar_light">#F5F2EB</color>
+    <color name="status_bar_dark">#1A1E24</color>
+
+    <!-- Icon colors -->
+    <color name="ic_launcher_background">#1C2128</color>
+    <color name="ic_launcher_foreground">#F5F2EB</color>
+
+    <!-- ─── Custom popup / dialog colors ─── -->
+    <color name="dialog_scrim">#B31C2128</color>
+    <color name="dialog_shadow">#1C2128</color>
+    <color name="dialog_input_bg">#FFFFFF</color>
+</resources>
