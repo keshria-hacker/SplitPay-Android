@@ -37,7 +37,7 @@
 - **Show-QR fallback** — generates a payment QR for any part, scannable from a second device/app
 - **Custom native popups** — pen-and-paper styled dialogs (light + dark)
 - **Receipt sharing** — copy, or share via WhatsApp / any installed app
-- **MDR savings calculator** (0.4% rule, capped at ₹300 per NPCI Oct-2026 guidelines)
+- **MDR savings calculator** (0.4% rule, capped at ₹300 per NPCI September-2026 guidelines)
 
 ---
 
