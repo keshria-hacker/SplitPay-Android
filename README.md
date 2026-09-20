@@ -1,6 +1,30 @@
 # SplitPay — Android App
 
-> Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the government's 0.4% MDR threshold for merchants — and run them as a guided sequence.
+> Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the 0.4% MDR threshold for merchants — and run them as a guided sequence.
+
+![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform: Android 7.0+](https://img.shields.io/badge/android-7.0%2B-brightgreen.svg)
+![Network: none](https://img.shields.io/badge/network-none-blue.svg)
+![Free & Open Source](https://img.shields.io/badge/free-open%20source-orange.svg)
+
+**SplitPay is free and open source.** No ads, no tracking, no backend, no account.
+
+---
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/1.jpg" width="220" alt="Payee screen"><br><sub><b>1.</b> Payee — scan or type a UPI ID</sub></td>
+    <td align="center"><img src="screenshots/2.jpg" width="220" alt="Amount screen"><br><sub><b>2.</b> Amount — quick chips &amp; note</sub></td>
+    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/4.jpg" width="220" alt="Execute screen"><br><sub><b>4.</b> Execute — auto-run / manual</sub></td>
+    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Show QR fallback"><br><sub><b>5.</b> Show-QR fallback for any part</sub></td>
+    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Receipt screen"><br><sub><b>6.</b> Done — receipt &amp; sharing</sub></td>
+  </tr>
+</table>
 
 ---
 
@@ -14,6 +38,14 @@
 - **Custom native popups** — pen-and-paper styled dialogs (light + dark)
 - **Receipt sharing** — copy, or share via WhatsApp / any installed app
 - **MDR savings calculator** (0.4% rule, capped at ₹300 per NPCI Oct-2026 guidelines)
+
+---
+
+## ⬇️ Install
+
+1. Grab the latest APK from the [Releases](../../releases) page, or build it yourself (see [Build Instructions](#-build-instructions)).
+2. Allow "Install from unknown sources" for your browser/file manager if prompted.
+3. Make sure at least one UPI app (GPay / PhonePe / Paytm / BHIM) is installed.
 
 ---
 
@@ -146,6 +178,8 @@ Downscaled 480px frame → `getImageData` → jsQR (`dontInvert` for speed) → 
 - **Release hygiene:** ProGuard keeps only the `@JavascriptInterface` surface; `Log.d/v/i` stripped from release.
 - **Explicitly out of scope:** the app never stores, transmits, or processes card/UPI credentials — payments happen entirely inside the user's chosen UPI app.
 
+Found a vulnerability? Please open a private security advisory on GitHub (Security → Advisories) instead of a public issue.
+
 ---
 
 ## 🛠 Build Instructions
@@ -153,7 +187,7 @@ Downscaled 480px frame → `getImageData` → jsQR (`dontInvert` for speed) → 
 ### Prerequisites
 | Tool | Version |
 |------|---------|
-| Android Studio | Ladybug (2024.2+) |
+| Android Studio | Latest stable (must support AGP 9.4.0) |
 | JDK | 17+ (bundled in Studio) |
 | Android SDK | API 37 |
 
@@ -231,6 +265,7 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 - `local.properties` is machine-specific; it regenerates when you open the project in Android Studio.
 - Never commit signing keys (`*.jks`, `*.keystore`) or passwords — release credentials come from environment variables.
 - The `graphify-out/` folder (knowledge-graph analysis) is optional local tooling output; keep it untracked.
+- Screenshots live in `screenshots/` (`1.jpg`–`6.jpg`, in screen order). Keep them reasonably small (under ~300 KB each) and free of real UPI IDs, names, or phone numbers.
 
 ## 🐛 Troubleshooting
 
@@ -241,6 +276,7 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 | Camera dark / no scan | Grant Camera permission; flash/torch appears only if the device supports it |
 | `JAVA_HOME` not set (CLI builds) | Point `JAVA_HOME` at Android Studio's bundled JBR |
 | Build fails on SDK | Install API 37 via Tools → SDK Manager |
+| Payments get declined after a few parts | Your bank/UPI app may enforce per-day transaction-count or amount limits, or flag rapid repeat payments — use Manual mode and space them out |
 
 ---
 
@@ -254,6 +290,22 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 | UI assets | `index.html` + `css/styles.css` + `js/app.js` + bundled jsQR/qrcodejs |
 | Permissions | CAMERA, VIBRATE |
 | Data collected | None |
+| License | MIT |
+
+---
+
+## ⚠️ Disclaimer
+
+- SplitPay is an independent, community project. It is **not affiliated with, endorsed by, or sponsored by NPCI, UPI, Google Pay, PhonePe, Paytm, BHIM, or any bank.** All product names are trademarks of their respective owners.
+- MDR rules, thresholds, and caps (including the 0.4% figure and ₹300 cap shown in the savings calculator) are set by regulators and change over time. The numbers in the app are **estimates for illustration**, not financial or legal advice — please verify against current NPCI / RBI circulars.
+- Splitting one payment into several means several separate UPI transactions. Bank limits, failed/pending parts, and merchant-side handling are outside this app's control. **Always verify each part in your UPI app's history.**
+- The software is provided "as is", without warranty of any kind. See [LICENSE](LICENSE).
+
+---
+
+## 📄 License
+
+SplitPay is released under the **[MIT License](LICENSE)** — free to use, modify, and distribute, including commercially, as long as the copyright notice is kept.
 
 ---
 
@@ -263,5 +315,18 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 - Added camera stream cleanup on page hide/unload to prevent battery drain
 - Enhanced UPI URL validation in openUpiLink to prevent malicious intents
 - Restricted dialog titles to always include 'SplitPay' to prevent spoofing
+- Added screenshots, MIT license, and disclaimer for the open-source release
 
-*SplitPay — making large UPI payments frictionless.
+
+<div align="center">
+
+### SplitPay
+
+**making large UPI payments frictionless.**
+
+Built with ❤️ for the open-source AI community.
+
+⭐ **If you find SplitPay useful, consider giving the project a star.**
+
+</div>
+
