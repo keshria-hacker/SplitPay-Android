@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # SplitPay — Android App
 
 > Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the government's 0.4% MDR threshold for merchants — and run them as a guided sequence.
@@ -67,16 +66,19 @@ app/src/main/
 ├── AndroidManifest.xml                 # Permissions (CAMERA, VIBRATE), UPI <queries>, deep links
 ├── kotlin/com/splitpay/app/
 │   ├── SplitPayApp.kt                  # Application: WebView debugging only in debug builds
-│   └── MainActivity.kt                 # Everything native:
-│       ├── setupAssetLoader()          #   HTTPS virtual domain for assets
-│       ├── setupWebView()              #   hardened WebSettings, bridge attach
-│       ├── AppDialogBuilder + showAppDialog()  # reusable custom popup system
-│       ├── AndroidBridge               #   JS→Kotlin: clipboard, share, UPI, popups
-│       ├── SplitPayWebViewClient       #   URL routing: upi://, intent://, external
-│       └── SplitPayWebChromeClient     #   camera permission, file chooser, JS dialogs
+│   ├── MainActivity.kt                 # Slim composition root: lifecycle, insets,
+│   │                                   #   launchers, back routing, WebView setup
+│   ├── dialog/AppDialog.kt             # AppDialogBuilder + showAppDialog() popups
+│   ├── bridge/AndroidBridge.kt         # JS→Kotlin: clipboard, share, UPI, popups
+│   └── webview/
+│       ├── SplitPayWebViewClient.kt    # URL routing + renderer crash recovery
+│       ├── SplitPayWebChromeClient.kt  # camera permission, file chooser, JS dialogs
+│       └── IntentLauncher.kt           # UPI/external intents, toast helper
 ├── assets/
-│   ├── index.html                      # the entire UI (screens, styles, logic)
-│   └── js/  jsQR.min.js, qrcode.min.js # bundled QR engines (offline)
+│   ├── index.html                      # markup shell (screens + modals)
+│   ├── css/styles.css                  # pen & paper theme (light + dark) + animations
+│   └── js/  app.js, jsQR.min.js,       # UI logic + bundled QR engines (offline)
+│            qrcode.min.js
 └── res/
     ├── layout/dialog_custom.xml        # popup layout (icon/title/message/input/buttons)
     ├── drawable/dialog_*               # popup card, buttons, input, badge
@@ -174,41 +176,61 @@ CLI build:
 2. Uncomment and fill `signingConfigs.release` in `app/build.gradle.kts`.
 3. Build:
    ```bash
-   ./gradlew bundleRelease    # → app-release.aab  (Play Store upload)
+   ./gradlew bundleRelease    # → app-release.aab  (store upload)
    ./gradlew assembleRelease  # → app-release.apk  (direct install/testing)
    ```
 
 ---
 
-## 🚀 Play Store Checklist
+## 🤝 Contributing
 
-**Already done in this repo:**
-- ✅ `targetSdk 35`, `versionCode/versionName` set, `minSdk 24`
-- ✅ `debug` build has a separate `applicationId` suffix (`.debug`) — clean release ID
-- ✅ Backup & device-transfer rules fully exclude app data
-- ✅ Minimal permissions (CAMERA, VIBRATE) with a human-readable camera-use label
-- ✅ Network security config (no cleartext), scoped FileProvider
-- ✅ Release minify + resource shrinking + ProGuard rules for the JS bridge
+Contributions are welcome! SplitPay is deliberately tiny and fully offline — please keep it that way.
 
-**You must do before submitting:**
-1. **Create the Play Console account** ($25 one-time) and complete identity verification.
-2. **Store listing:** app name, 512×512 icon, 1024×500 feature graphic, ≥2 phone screenshots.
-3. **Privacy policy URL** (required — template below; GitHub Pages works).
-4. **Financial declaration:** declare UPI intent usage in the *App content → Financial features* form. The app itself touches no money — it composes UPI deep links for the user's own payment apps.
-5. **Data safety form:** "No data collected, no data shared."
+### Ground rules
+- **No new dependencies** without discussion. The UI is vanilla HTML/CSS/JS on purpose: no framework, no build step, instant load.
+- **Zero network access.** The app must keep making no outbound HTTP requests; UPI goes through Android intents only.
+- **Zero data collection.** No analytics, no tracking, nothing persisted — state lives in JS memory only.
+- **Bridge hygiene.** Every `@JavascriptInterface` method must validate/blank-guard inputs and hop to the UI thread via `runOnUiThread`. Keep the bridge surface minimal.
 
-> ⚠️ **Listing copy caution:** phrase the value proposition as *"split large payments into installments"* rather than *"bypass MDR / government fee"*. Fee-avoidance framing can trip Play's financial-policy review even though the mechanic (multiple smaller transfers) is a normal UPI operation.
+### Project layout
+See the [Code Map](#-code-map) above. Quick orientation:
+- `MainActivity.kt` — slim composition root only (lifecycle, insets, launchers, back routing)
+- `dialog/` — custom popup builder; `bridge/` — the JS↔Kotlin contract; `webview/` — clients + intent helpers
+- `assets/index.html` — markup; `assets/css/styles.css` — theme + animations; `assets/js/app.js` — all UI logic
 
-**Privacy policy template:**
-```
-SplitPay Privacy Policy
-SplitPay is a payment utility. We do not collect, store, or transmit any
-personal or payment data. All operations run locally on your device. No
-analytics, no tracking, no third-party services.
-Contact: [your email]
-```
+### JS ↔ Kotlin contract (do not rename casually)
+The web layer exposes three globals that native code calls:
+- `onVisReturn()` — nudge after returning from a UPI app (called from `MainActivity.onResume`)
+- `onAppBack()` — hardware-back claim router (called from the back-press callback)
+- `onAppDialogResult(id, value)` — answers to native confirm/input dialogs
 
----
+If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and** `js/app.js` in the same PR.
+
+### Development workflow
+1. Fork, then branch: `feat/my-feature` or `fix/my-bugfix`.
+2. Make the change (Kotlin under `app/src/main/kotlin/`, web UI under `app/src/main/assets/`).
+3. Build and smoke-test on a **real device** (UPI apps don't run on emulators):
+   ```bash
+   ./gradlew assembleDebug
+   ```
+4. If you touched JS, keep it syntactically clean: `node --check app/src/main/assets/js/app.js`.
+5. Open a pull request describing **what** changed and **why**. Include before/after behavior for UI changes.
+
+### Code style
+- **Kotlin:** 4-space indent, KDoc on public members, `internal` visibility for module-internal APIs, explain the "why" in comments.
+- **JS:** small functions, section banners, comment intent (not mechanics). Theme names (`S`, `goTo`) are load-bearing — don't rename in drive-by refactors.
+- **CSS:** only theme variables for colors (light/dark must both work); animations restricted to `transform`/`opacity` (GPU-composited); respect `prefers-reduced-motion`.
+
+### Safety invariants (reviewers will check)
+- Split math stays **integer-exact** — no floats anywhere near amounts (see Core Algorithms).
+- Every user-controlled string (QR scans, payee names) is HTML-escaped via `esc()` before touching `innerHTML`.
+- Amount caps: hard ₹10,000 per transaction, ₹1,999 per part — don't loosen without discussion.
+
+### Repo hygiene (check before you push)
+- `.gitignore` covers `build/`, `.gradle/`, `.idea/`, `local.properties`, keystores and `graphify-out/` — never force-add these.
+- `local.properties` is machine-specific; it regenerates when you open the project in Android Studio.
+- Never commit signing keys (`*.jks`, `*.keystore`) or passwords — release credentials come from environment variables.
+- The `graphify-out/` folder (knowledge-graph analysis) is optional local tooling output; keep it untracked.
 
 ## 🐛 Troubleshooting
 
@@ -229,13 +251,17 @@ Contact: [your email]
 | Min Android | 7.0 (API 24) |
 | Target Android | 15 (API 35) |
 | Architecture | Single Activity + WebView shell + native bridge |
-| UI assets | `index.html` (~50 KB) + bundled jsQR/qrcodejs |
+| UI assets | `index.html` + `css/styles.css` + `js/app.js` + bundled jsQR/qrcodejs |
 | Permissions | CAMERA, VIBRATE |
 | Data collected | None |
 
 ---
 
-*SplitPay — making large UPI payments frictionless.*
-=======
-# SplitPay
->>>>>>> fbb937e56883bc2732d9cc90b538b778cf1cb7ae
+🎯 Recent Changes
+- Fixed live QR code scanning issue (now works with inverted QR codes)
+- Updated target SDK to 35 (Android 15)
+- Added camera stream cleanup on page hide/unload to prevent battery drain
+- Enhanced UPI URL validation in openUpiLink to prevent malicious intents
+- Restricted dialog titles to always include 'SplitPay' to prevent spoofing
+
+*SplitPay — making large UPI payments frictionless.

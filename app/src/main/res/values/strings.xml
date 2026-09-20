@@ -13,4 +13,17 @@
     <string name="ok">OK</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+
+    <!-- WebView clients & intent launcher (user-visible native messages) -->
+    <string name="renderer_crashed">Web content crashed. Restarting SplitPay…</string>
+    <string name="renderer_restarted">Web content was restarted.</string>
+    <string name="renderer_crash_loop">SplitPay keeps restarting. Please reopen the app.</string>
+    <string name="app_not_found">Required app not found</string>
+    <string name="could_not_open_upi">Could not open UPI app: %1$s</string>
+    <string name="could_not_open_link">Could not open link</string>
+    <string name="invalid_upi_url">Invalid UPI URL</string>
+    <string name="share_subject">SplitPay Ledger</string>
+    <string name="share_chooser_title">Share receipt via</string>
+    <string name="clipboard_label">SplitPay Receipt</string>
+    <string name="input_hint_upi">Enter UPI ID</string>
 </resources>
