@@ -529,8 +529,8 @@ function onAppBack(){
   }catch(e){return false;}                     // any JS error → native exit popup
 }
 
-// ─── MDR SAVINGS ALGORITHM (OCT 2026 NPCI RULES) ───
-function calcGovtSavings(totalAmount) {
+// ─── MDR SAVINGS ALGORITHM (SEPTEMBER 2026 NPCI RULES) ───
+function calcMdrSavings(totalAmount) {
   // Free up to 2000. Above 2000 attracts 0.4% MDR capped at 300 INR.
   if (totalAmount <= 2000) return 0;
   let fee = totalAmount * 0.004;
@@ -548,7 +548,7 @@ function finish(){
   document.getElementById('d-sub').textContent=pn===S.splits.length?'Sequence finished successfully.':'Some parts were skipped or failed.';
   
   // Inject Savings Logic
-  const savingsAmount = calcGovtSavings(S.total);
+  const savingsAmount = calcMdrSavings(S.total);
   if(savingsAmount > 0) {
       document.getElementById('d-savings-card').style.display = 'block';
       document.getElementById('d-savings-val').textContent = '₹' + savingsAmount.toFixed(2);
