@@ -43,8 +43,15 @@
 
 ## ⬇️ Install
 
-1. Grab the latest APK from the [Releases](../../releases) page, or build it yourself (see [Build Instructions](#-build-instructions)).
+1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay-Android/releases/latest/download/SplitPay-BETA.apk)
+
+
+   *or* Grab the latest APK from the [Releases](../../releases) page,
+
+   *or* build it yourself (see [Build Instructions](#-build-instructions)).
+
 2. Allow "Install from unknown sources" for your browser/file manager if prompted.
+
 3. Make sure at least one UPI app (GPay / PhonePe / Paytm / BHIM) is installed.
 
 ---
