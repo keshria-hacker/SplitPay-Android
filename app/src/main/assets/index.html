@@ -815,6 +815,7 @@
     <button class="at" id="at-how" role="tab" aria-selected="false" onclick="aboutTab('how')">How it works</button>
     <button class="at" id="at-faq" role="tab" aria-selected="false" onclick="aboutTab('faq')">FAQ</button>
     <button class="at" id="at-privacy" role="tab" aria-selected="false" onclick="aboutTab('privacy')">Privacy</button>
+    <button class="at" id="at-update" role="tab" aria-selected="false" onclick="aboutTab('update')">Update</button>
   </div>
 
   <div class="about-body">
@@ -1100,6 +1101,19 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- ── UPDATE TAB ── -->
+    <div class="about-panel" id="ap-update" role="tabpanel" style="display:none;">
+      <div class="about-section">
+        <div class="about-section-head">Check for Updates</div>
+        <div class="about-disclaimer" style="margin-top: 16px;">
+          <span>Ensure you have the latest version of SplitPay for new features and bug fixes.</span>
+        </div>
+        <div style="margin-top: 24px; text-align: center;">
+          <button class="btn primary" onclick="checkForUpdates()" style="width: 100%; max-width: 300px;">Check for Updates</button>
+        </div>
+      </div>
     </div>
   </div><!-- /.about-body -->
 

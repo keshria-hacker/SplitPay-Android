@@ -443,4 +443,17 @@ class AndroidBridge(private val activity: MainActivity) {
         /** Encode [s] as a JSON string literal. Public for use in MainActivity. */
         fun jsString(s: String): String = AndroidStringEncoder.jsString(s)
     }
+
+    @JavascriptInterface
+    fun checkForUpdates(url: String) {
+        activity.runOnUiThread {
+            try {
+                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                intent.data = android.net.Uri.parse(url)
+                activity.startActivity(intent)
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(activity, "Could not open link", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }

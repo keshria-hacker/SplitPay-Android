@@ -63,7 +63,7 @@ function _aboutKeydown(e) {
 
 /* ── tab switching ─────────────────────────────────────────────────── */
 
-const _TABS = ['about', 'how', 'faq', 'privacy'];
+const _TABS = ['about', 'how', 'faq', 'privacy', 'update'];
 
 function aboutTab(name) {
   if (!_TABS.includes(name)) return;
@@ -167,4 +167,16 @@ function updateMdrHint(rawAmount) {
 
 function fmt(n) {
   return Number(n).toLocaleString('en-IN');
+}
+
+function checkForUpdates() {
+  // Replace this link with your actual download URL or GitHub releases page
+  const updateUrl = "https://github.com/keshria-hacker/SplitPay-Android/releases/latest";
+  
+  if (window.Android && typeof window.Android.checkForUpdates === 'function') {
+    window.Android.checkForUpdates(updateUrl);
+  } else {
+    // Fallback for browsers
+    window.open(updateUrl, '_blank');
+  }
 }
