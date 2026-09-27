@@ -1,17 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Primary (filled) popup button: ink background, 2dp ink border, 3dp offset shadow -->
+<!--
+  Primary dialog button drawable.
+
+  BUG FIXED: In light mode, both the shadow layer and button fill were
+  @color/ink (#1C2128), making the shadow completely invisible.
+
+  FIX: Shadow now uses @color/dialog_shadow_pri (green accent in light,
+  lighter green in dark) so the 3dp bottom-right shadow strip is clearly
+  visible against the dark ink button body — matching the web CSS fix
+  where primary buttons get `shd-pri` (green offset shadow).
+
+  Layer-list produces a "comic book" offset 3D button:
+    Layer 1 = shadow rectangle (full size) → visible at right & bottom
+    Layer 2 = button rectangle (inset 3dp right + 3dp bottom from shadow)
+-->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Shadow: green accent — clearly distinct from ink button body -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/dialog_shadow" />
-            <corners android:radius="6dp" />
+            <solid android:color="@color/dialog_shadow_pri" />
+            <corners android:radius="8dp" />
         </shape>
     </item>
-    <item android:right="3dp" android:bottom="3dp">
+
+    <!-- Button body: ink, shifted 3dp up-left (shadow peeks bottom-right) -->
+    <item
+        android:right="3dp"
+        android:bottom="3dp">
         <shape android:shape="rectangle">
             <solid android:color="@color/ink" />
+            <stroke
+                android:width="2dp"
+                android:color="@color/ink" />
             <corners android:radius="6dp" />
-            <stroke android:width="2dp" android:color="@color/ink" />
         </shape>
     </item>
+
 </layer-list>

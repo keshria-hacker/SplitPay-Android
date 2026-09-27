@@ -2,8 +2,9 @@
 <!--
     FileProvider paths — deliberately NARROW.
     Never expose external-path "." (whole shared storage) via a grantUriPermissions
-    provider. SplitPay shares nothing today; these paths exist only for future
-    receipt exports and point at the app's own private dirs.
+    provider. Only the app's own private dirs are exposed:
+      • cache_files (cache/share/) — merchant QR poster PNGs (AndroidBridge.shareImage)
+      • app_files   (files/receipts/) — reserved for a future receipt export feature
 -->
 <paths>
     <files-path

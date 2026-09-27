@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  SplitPay Adaptive Icon (API 26+).
+  Background is the actual brand logo.png, rendered full-bleed at high
+  resolution (drawable-nodpi/ic_launcher_background.png) so it is
+  pixel-faithful to the reference artwork. Foreground is transparent —
+  Android applies the system mask (circle, squircle, etc.) directly
+  over the logo, the same way the legacy launcher icon is displayed.
+-->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
     <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <!--
+      Monochrome layer for themed icons (Android 13+): a white silhouette
+      of the logo's bright glyph, derived directly from logo.png.
+    -->
+    <monochrome android:drawable="@drawable/ic_launcher_monochrome" />
 </adaptive-icon>

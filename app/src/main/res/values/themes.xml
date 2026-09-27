@@ -21,7 +21,12 @@
         <item name="colorPrimary">@color/ink</item>
         <item name="colorPrimaryVariant">@color/ink</item>
         <item name="colorOnPrimary">@color/background</item>
-        <item name="colorSecondary">@color/accent_green</item>
+        <!-- FIX: was @color/accent_green, a color that doesn't exist anywhere in
+             colors.xml/values-night/colors.xml — this failed the resource-linking
+             step of every build. @color/ok is this theme's forest-green accent
+             (defined in both light and dark colors.xml), so it's the correct,
+             already-themed token to use here. -->
+        <item name="colorSecondary">@color/ok</item>
         <item name="colorOnSecondary">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/ink</item>
@@ -39,8 +44,18 @@
     <style name="Theme.SplitPay.Splash" parent="Theme.SplashScreen">
         <!-- Splash background matches the app background -->
         <item name="windowSplashScreenBackground">@color/background</item>
-        <!-- Adaptive icon foreground used as the splash icon -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <!--
+          Splash icon: a dedicated raster copy of logo.png, NOT the
+          adaptive @mipmap/ic_launcher. The SplashScreen API only draws
+          an adaptive icon's foreground layer (masked into a circle) and
+          discards the background layer — and our adaptive icon keeps
+          all of the brand artwork in the background layer with a
+          transparent foreground (see mipmap-anydpi-v26/ic_launcher.xml),
+          so pointing splash at @mipmap/ic_launcher renders blank.
+          This plain, non-adaptive drawable is shown as-is, full logo
+          intact, with no automatic masking/cropping.
+        -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
         <!-- Theme applied after splash is dismissed -->
         <item name="postSplashScreenTheme">@style/Theme.SplitPay</item>
     </style>

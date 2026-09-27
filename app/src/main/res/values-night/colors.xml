@@ -1,15 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dark mode palette — Blueprint / Slate
+  Overrides the values/colors.xml entries for dark theme.
+  dialog_shadow_pri uses a lighter sage green so the shadow
+  remains visible against the light cream ink button.
+-->
 <resources>
-    <!-- SplitPay brand colors — Night (Blueprint / Slate) -->
+
+    <!-- ── Core surfaces ────────────────────────────────────────── -->
     <color name="background">#1A1E24</color>
     <color name="surface">#22272E</color>
+    <color name="surface2">#2D333B</color>
+
+    <!-- ── Typography & borders ─────────────────────────────────── -->
     <color name="ink">#E8E3D8</color>
     <color name="ink_light">#B0B7C3</color>
-    <color name="surface2">#2D333B</color>
-    <color name="accent_green">#85C19F</color>
 
-    <!-- ─── Custom popup / dialog colors ─── -->
-    <color name="dialog_scrim">#B3000000</color>
+    <!-- ── Semantic ──────────────────────────────────────────────── -->
+    <color name="ok">#85C49F</color>
+    <color name="ok_bg">#1A3626</color>
+    <color name="err">#D88B8B</color>
+    <color name="err_bg">#3D1A1A</color>
+
+    <!-- ── Dialog button shadows ────────────────────────────────── -->
+    <!-- Secondary: pure black against cream surface body — fine ✓ -->
     <color name="dialog_shadow">#000000</color>
-    <color name="dialog_input_bg">#16191E</color>
+
+    <!--
+      Primary: light sage green — visible as a 3dp strip against
+      the light cream ink button (#E8E3D8) in dark mode.
+    -->
+    <color name="dialog_shadow_pri">#85C49F</color>
+
+    <!-- ── Status bar ─────────────────────────────────────────────── -->
+    <color name="statusBar">#1A1E24</color>
+
 </resources>

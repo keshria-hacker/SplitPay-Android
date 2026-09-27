@@ -24,6 +24,14 @@
     <string name="invalid_upi_url">Invalid UPI URL</string>
     <string name="share_subject">SplitPay Ledger</string>
     <string name="share_chooser_title">Share receipt via</string>
+    <string name="share_image_chooser_title">Share QR code via</string>
+    <string name="share_image_failed">Could not share the QR image</string>
     <string name="clipboard_label">SplitPay Receipt</string>
     <string name="input_hint_upi">Enter UPI ID</string>
+
+    <!-- Settings screen (native bridge + web UI) -->
+    <string name="settings_default_app_none">Ask every time</string>
+    <string name="settings_default_app_set">Default UPI app set</string>
+    <string name="settings_default_app_cleared">Will ask every time</string>
+    <string name="upi_app_missing">That UPI app is no longer installed</string>
 </resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- See mipmap/ic_launcher.xml — same legacy fallback for API 24–25.
+     There is no adaptive circular mask below API 26, so this renders
+     square like any other pre-API-26 launcher icon; that's expected. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_launcher_legacy" />
+</layer-list>
