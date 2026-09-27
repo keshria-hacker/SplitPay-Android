@@ -26,7 +26,9 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="upi" />
         </intent>
-        <!-- Specific UPI apps -->
+        <!-- Specific UPI apps — every entry in UpiAppCatalog.KNOWN_APPS must
+             be listed here or it will be invisible on Android 11+ (package
+             visibility filtering) and the Settings picker can't detect it. -->
         <package android:name="com.google.android.apps.nbu.paisa.user" />  <!-- Google Pay -->
         <package android:name="net.one97.paytm" />                          <!-- Paytm -->
         <package android:name="com.phonepe.app" />                          <!-- PhonePe -->
@@ -34,6 +36,8 @@
         <package android:name="com.amazon.mShop.android.shopping" />        <!-- Amazon Pay -->
         <package android:name="com.mobikwik_new" />                         <!-- MobiKwik -->
         <package android:name="com.freecharge.android" />                   <!-- Freecharge -->
+        <package android:name="com.cred.store" />                           <!-- CRED UPI -->
+        <package android:name="com.myairtelapp.app" />                      <!-- Airtel Thanks -->
         <package android:name="com.whatsapp" />                             <!-- WhatsApp -->
     </queries>
 
@@ -61,6 +65,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.SplitPay.Splash">
@@ -70,7 +75,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Handle UPI callback deep links (when UPI app returns to SplitPay) -->
+            <!--
+                Handle UPI callback deep links (when UPI app returns to SplitPay).
+                FIX: this filter existed with no android:launchMode set and no
+                onNewIntent() override, so a "splitpay://" link opened while the
+                app was already running would spawn a second, stacked Activity
+                instance instead of returning to the existing one. launchMode=
+                "singleTask" + MainActivity.onNewIntent() (added alongside this)
+                route it back to the single running instance instead.
+            -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

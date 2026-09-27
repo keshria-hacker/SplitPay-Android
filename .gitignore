@@ -1,45 +1,36 @@
-# ── Gradle ────────────────────────────────────────────────────────────────
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio Specific
+.idea/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+bin/
+gen/
+out/
+.navigation/
+
+# Gradle
 .gradle/
 build/
 app/build/
 
-# ── Local machine config (never commit) ───────────────────────────────────
-# local.properties holds your absolute SDK path; Android Studio regenerates it.
-local.properties
-
-# ── IntelliJ / Android Studio ─────────────────────────────────────────────
-.idea/
-captures/
-*.iml
-
-# ── Kotlin tooling data ───────────────────────────────────────────────────
-.kotlin/
-
-# ── Signing keys — NEVER commit these ─────────────────────────────────────
+# Signing
 *.jks
 *.keystore
-keystore.properties
-
-# ── Optional local tooling (graphify knowledge-graph output) ──────────────
-graphify-out/
-
-# ── Logs & OS junk ────────────────────────────────────────────────────────
-*.log
-.DS_Store
-Thumbs.db
-
-# ── Java / generic leftovers ──────────────────────────────────────────────
-*.class
-*.ctxt
-.mtj.tmp/
-hs_err_pid*
-replay_pid*
-
-# Package archives — none of these belong in an Android app repo
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar

@@ -17,16 +17,23 @@
         <item name="colorPrimary">@color/ink</item>
         <item name="colorPrimaryVariant">@color/ink</item>
         <item name="colorOnPrimary">@color/background</item>
-        <item name="colorSecondary">@color/accent_green</item>
+        <!-- FIX: @color/accent_green doesn't exist — see values/themes.xml note. -->
+        <item name="colorSecondary">@color/ok</item>
         <item name="colorOnSecondary">@color/background</item>
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/ink</item>
     </style>
 
-    <!-- Dark splash screen: matches dark app background -->
+    <!-- Dark splash screen: matches dark app background.
+         Uses the dedicated non-adaptive @drawable/ic_splash_logo (plain
+         raster copy of logo.png) rather than @mipmap/ic_launcher — the
+         SplashScreen API shows only an adaptive icon's foreground layer,
+         which is transparent in our launcher icon (artwork lives in the
+         background layer instead), so the adaptive icon renders blank
+         here. See values/themes.xml for the full explanation. -->
     <style name="Theme.SplitPay.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
         <item name="postSplashScreenTheme">@style/Theme.SplitPay</item>
     </style>
 

@@ -1,9 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <!--
-        SplitPay does not make in-app network calls. Local assets are served
-        by WebViewAssetLoader over this virtual HTTPS origin. UPI and sharing
-        leave the app through Android's intent system.
+        FIX: this comment used to claim the domain-config entry below "allows"
+        appassets.androidplatform.net as if everything else were blocked. It
+        isn't — Android's domain-config only sets trust-anchors/cleartext
+        policy for domains that match it; it is NOT an allowlist, and does
+        nothing to stop the WebView reaching any other HTTPS host. This file
+        only forbids *cleartext* (plain HTTP) traffic, globally, via
+        base-config below. That's exactly the gap the previous build fell
+        through: index.html linked fonts.googleapis.com/fonts.gstatic.com,
+        and this config did nothing to prevent it since both are HTTPS. Fonts
+        are now bundled locally instead (assets/fonts/), so in practice the
+        app makes no other requests — but that's a property of what the HTML/
+        JS/CSS actually reference, not something this file enforces. If you
+        want a real enforced allowlist, that requires a WebViewClient
+        shouldInterceptRequest()/shouldOverrideUrlLoading() check, not
+        network-security-config — see SECURITY.md.
     -->
     <base-config cleartextTrafficPermitted="false">
         <trust-anchors>
@@ -11,7 +23,11 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Allow the virtual HTTPS asset domain used by WebViewAssetLoader -->
+    <!-- Sets trust-anchors/cleartext policy for the virtual HTTPS asset
+         domain WebViewAssetLoader serves local assets over. Redundant with
+         base-config above (same cleartext policy, same trust anchors) but
+         kept explicit for clarity — see the note above about what this
+         entry does and doesn't do. -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">appassets.androidplatform.net</domain>
         <trust-anchors>

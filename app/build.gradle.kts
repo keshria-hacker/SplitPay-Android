@@ -5,14 +5,20 @@ plugins {
 
 android {
     namespace  = "com.splitpay.app"
-    // FIX: was 37 (preview / unstable). 35 = Android 15 stable, matches targetSdk.
-    // Update to 36 (Android 16) once you've smoke-tested on API 36.
+    // compileSdk 37 is the max level AGP 9.4.x can compile against.
     compileSdk = 37
 
     defaultConfig {
         applicationId = "com.splitpay.app"
         minSdk        = 24
-        targetSdk     = 35
+        // FIX: was 35. Google Play has required new apps AND app updates to
+        // target Android 16 (API 36) since August 31, 2026 — an app still
+        // targeting 35 can no longer be submitted or updated on Play as of
+        // this build. Bumped to 36; re-smoke-test predictive back and any
+        // other API-36 behavior changes before shipping (see MainActivity's
+        // hardware-back handling, which already uses OnBackPressedCallback
+        // rather than the removed Activity.onBackPressed()/KEYCODE_BACK path).
+        targetSdk     = 36
         versionCode   = 1
         versionName   = "1.0.0"
 
@@ -117,7 +123,11 @@ dependencies {
     // Activity
     implementation("androidx.activity:activity-ktx:1.13.0")
 
-    // FIX: Splash Screen API — provides proper API 31+ adaptive splash screen
+    // Splash Screen API — provides proper API 31+ adaptive splash screen
     // and eliminates the cold-start white flash on older API levels.
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    // FIX: was 1.0.1 (July 2022) — two stable minor versions behind. 1.2.0
+    // is current stable and fixes several splash→activity theme-handoff
+    // bugs that touch exactly the installSplashScreen() + edge-to-edge path
+    // MainActivity.onCreate() runs on every launch.
+    implementation("androidx.core:core-splashscreen:1.2.0")
 }

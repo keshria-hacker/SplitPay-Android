@@ -1,6 +1,6 @@
 # SplitPay — Android App
 
-> Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the 0.4% MDR threshold for merchants — and run them as a guided sequence.
+> Smart UPI installment splitter. Split large UPI payments into parts of ≤ ₹1,999 — under the 0.4% MDR threshold for merchants — and run them as a guided sequence. Merchants can also bundle up to 12 UPI accounts into one QR so a SplitPay payer's parts land across all of them.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform: Android 7.0+](https://img.shields.io/badge/android-7.0%2B-brightgreen.svg)
@@ -9,7 +9,7 @@
 
 **SplitPay is free and open source.** No ads, no tracking, no backend, no account.
 
----
+
 
 ## 📸 Screenshots
 
@@ -17,34 +17,41 @@
   <tr>
     <td align="center"><img src="screenshots/1.jpg" width="220" alt="Payee screen"><br><sub><b>1.</b> Payee — scan or type a UPI ID</sub></td>
     <td align="center"><img src="screenshots/2.jpg" width="220" alt="Amount screen"><br><sub><b>2.</b> Amount — quick chips &amp; note</sub></td>
-    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split</sub></td>
+    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split, per-account routing</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="screenshots/4.jpg" width="220" alt="Execute screen"><br><sub><b>4.</b> Execute — auto-run / manual</sub></td>
-    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Show QR fallback"><br><sub><b>5.</b> Show-QR fallback for any part</sub></td>
-    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Receipt screen"><br><sub><b>6.</b> Done — receipt &amp; sharing</sub></td>
+    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Receipt screen"><br><sub><b>5.</b> Done — receipt &amp; sharing</sub></td>
+    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Receive mode QR"><br><sub><b>6.</b> Receive mode — one QR for up to 12 accounts</sub></td>
   </tr>
 </table>
+
 
 ---
 
 ## 📱 What the App Does
 
-- **Scan or enter** any UPI ID / QR code (live camera, photo, or gallery)
-- **Auto-splits** large amounts into ≤ ₹1,999 parts (equal or randomized)
+**Pay mode** (default):
+- **Scan or enter** any UPI ID / QR code (live camera, photo, or gallery) — including a SplitPay merchant QR (see Receive mode below)
+- **Auto-splits** large amounts into ≤ ₹1,999 parts (equal or randomized, no two random parts share an amount)
 - **Auto-Run mode** — sequences payments automatically, with a Turbo back-to-back option
 - **Manual mode** — review and confirm each part individually
 - **Show-QR fallback** — generates a payment QR for any part, scannable from a second device/app
 - **Custom native popups** — pen-and-paper styled dialogs (light + dark)
 - **Receipt sharing** — copy, or share via WhatsApp / any installed app
-- **MDR savings calculator** (0.4% rule, capped at ₹300 per NPCI September-2026 guidelines)
+- **MDR savings calculator** (0.4% rule, capped at ₹300, for totals over ₹2,000 — see NPCI's current guidance for the applicable numbers)
+
+**Receive mode** (new):
+- A merchant adds up to **12 UPI IDs** and gets back **one QR**.
+- Any ordinary UPI app scanning that QR pays only the **first (primary)** account — it's a completely standard `upi://pay?...` link with one extra, harmless query parameter.
+- A SplitPay payer scanning it sees every account and can spread their split across them, with a balanced default assignment and per-part manual override.
+- The merchant's business name and account list are saved on-device so the QR doesn't need regenerating each time.
 
 ---
 
 ## ⬇️ Install
 
 1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay-Android/releases/latest/download/SplitPay-BETA.apk)
-
 
    *or* Grab the latest APK from the [Releases](../../releases) page,
 
@@ -60,41 +67,56 @@
 
 | Layer | Technology | Why |
 |-------|-----------|-----|
-| Language | **Kotlin** (JVM 17) | Native Android, coroutine-free single-activity design |
+| Language | **Kotlin** (JVM 17) | Native Android, single-activity design |
 | UI Shell | **WebView + WebViewAssetLoader** | UI ships as a local web app served from `https://appassets.androidplatform.net` (secure origin: camera, clipboard APIs work) |
-| UI (web) | Vanilla **HTML/CSS/JS**, zero frameworks | ~50 KB single file, instant load, no build step for the UI |
-| QR decode | **jsQR 1.4.0** (bundled locally) | Offline scanning, no CDN dependency |
-| QR generate | **qrcodejs 1.0.0** (bundled locally) | Payment QR fallback |
-| Native dialogs | **Material Components** theme + custom XML popups | Brand-consistent, DayNight aware |
-| Build | **Gradle 9.6 / AGP 9.4.0 / ViewBinding** | |
-| Min SDK | **24** (Android 7.0) | Covers ~98% of Indian devices |
-| Target SDK | **35** (Android 15) | Meets current Play Store requirement |
+| UI (web) | Vanilla **HTML/CSS/JS**, zero frameworks, ~16 small modules | No build step for the UI — see [Code Map](#-code-map) for the breakdown |
+| QR decode | **jsQR 1.4.0** (bundled locally, attribution intact) | Offline scanning, no CDN dependency |
+| QR generate | **qrcode.min.js** (bundled locally) | Payment QR fallback + merchant Receive-mode QR — vendored from [qrcodejs](https://github.com/davidshimjs/qrcodejs) (MIT), attribution header intact |
+| Native dialogs | **Material Components** theme + custom XML popups (`dialog/AppDialog.kt`) | Brand-consistent, DayNight aware |
+| Build | **Gradle 9.6.0 / AGP 9.4.1 / Kotlin 2.2.10 / ViewBinding** | |
+| Min SDK | **24** (Android 7.0) | Covers the large majority of Indian devices |
+| Target SDK | **36** (Android 16) | Required for Play Store submissions/updates since Google's Aug 31, 2026 target-API deadline; `compileSdk` is pinned to 37, the max AGP 9.4.x supports |
 
-**No network backend.** The app makes zero outbound HTTP requests; UPI deep links go through the Android intent system, not HTTP.
+**No network backend.** The app makes zero outbound HTTP requests; UPI deep links go through the Android intent system, not HTTP. All history/preferences/merchant-account data lives in the WebView's `localStorage`, on-device only. (Fonts are self-hosted under `assets/fonts/` for exactly this reason — see Recent Changes.)
 
 ---
 
 ## ⚙️ How the App Works — Flow
 
+### Pay mode
+
 ```
 ┌────────────┐   ┌────────────┐   ┌────────────┐   ┌────────────┐   ┌──────────┐
 │ 1. PAYEE   │──▶│ 2. AMOUNT  │──▶│ 3. PLAN    │──▶│ 4. EXECUTE │──▶│ 5. DONE  │
 │ scan/type  │   │ + chips    │   │ equal/rand │   │ auto/manual│   │ receipt  │
-│ UPI ID     │   │ + note     │   │ editable   │   │ turbo/pause│   │ + share  │
+│ UPI ID     │   │ + note     │   │ + accounts │   │ turbo/pause│   │ + share  │
 └────────────┘   └────────────┘   └────────────┘   └────────────┘   └──────────┘
 ```
 
-**Step 1 — Payee.** Scan a UPI QR with the camera (live jsQR loop on a downscaled 480px frame, ~8 fps to save CPU) or pick from gallery/photo, or type a UPI ID. Scanned `pa=`/`pn=` fields are validated and length-capped.
+**Step 1 — Payee.** Scan a UPI QR with the camera (a `setTimeout`-driven jsQR loop on a downscaled 480px frame, ~8 fps to save CPU/battery) or pick from gallery/photo, or type a UPI ID. Scanned `pa=`/`pn=` fields are validated and length-capped. If the scanned QR is a SplitPay merchant QR (see Receive mode), every account it carries is picked up here too.
 
 **Step 2 — Amount.** Amount input is sanitized (integer rupees, capped at ₹10,000). Quick chips (2,500 / 5,000 / 10K) highlight when matching.
 
-**Step 3 — Plan.** The app computes the **minimum number of parts** `⌈total / 1999⌉`; you can raise it (max 200). Choose **Equal** or **Random** amounts, edit any part inline, and the sum-check bar turns green only when `Σ parts === total` and every part is within `[₹1, ₹1,999]`.
+**Step 3 — Plan.** The app computes the **minimum number of parts** `⌈total / 1999⌉`; you can raise it (max 200). Choose **Equal** or **Random** amounts, edit any part inline, and the sum-check bar turns green only when `Σ parts === total` and every part is within `[₹1, ₹1,999]`. **If the payee is a multi-account merchant**, each part also gets a receiving-account picker, defaulting to a balanced-by-amount assignment across all the merchant's accounts (biggest parts placed first, always onto whichever account has received the least so far); a "one part per account" shortcut and per-part manual overrides are both available.
 
 **Step 4 — Execute.**
-- *Auto-Run*: builds `upi://pay?...` links per part and opens the installed UPI app. When you return, `visibilitychange` (+ a native `onVisReturn()` nudge from MainActivity) triggers the confirm sheet. **Turbo** chains parts back-to-back; otherwise a 3-2-1 countdown runs. You can **Pause**, **Skip**, **Mark Done**, **Show QR**, or **Retry** any part.
-- *Manual*: a ledger list where each part unlocks only after the previous one is marked paid/failed — each row has Pay / Show-QR / Done actions.
+- *Auto-Run*: builds a `upi://pay?...` link per part — routed to the part's assigned account for multi-account merchants — and sets it as the "Open UPI App" link's `href`; navigating that link is intercepted by `SplitPayWebViewClient.shouldOverrideUrlLoading` and handed to `launchUpiIntent()`, which opens the installed UPI app. When you return, `visibilitychange` (+ a native `onVisReturn()` nudge from `MainActivity`) triggers the confirm sheet. **Turbo** chains parts back-to-back; otherwise a 3-2-1 countdown runs. You can **Pause**, **Skip**, **Mark Done**, **Show QR**, or **Retry** any part.
+- *Manual*: a ledger list where each part unlocks only after the previous one is marked paid/failed — each row shows its destination account (for multi-account merchants) and has Pay / Show-QR / Done actions.
 
-**Step 5 — Done.** Receipt with per-part ✓/✕, MDR savings card, share or copy.
+**Step 5 — Done.** Receipt with per-part ✓/✕ and destination account, MDR savings card, share or copy.
+
+### Receive mode
+
+```
+┌──────────────────┐        ┌──────────────────┐
+│ ACCOUNTS          │──────▶│ QR                │
+│ name + up to 12    │       │ one QR, all       │
+│ UPI IDs (add/scan/ │       │ accounts encoded, │
+│ paste, reorder)    │       │ share/print        │
+└──────────────────┘        └──────────────────┘
+```
+
+Add a business name and up to 12 UPI IDs (typed, pasted several at once, or scanned from an existing QR), pick which one is primary, then generate. The QR is `upi://pay?pa=<primary>&pn=<name>&cu=INR&spx=<other accounts, `~`-separated>` — a normal UPI link that any UPI app can pay, plus one extra parameter only SplitPay looks for. See [Core Algorithms](#-core-algorithms) and [SECURITY.md](SECURITY.md) for the full format and its trust properties.
 
 ---
 
@@ -104,25 +126,45 @@
 app/src/main/
 ├── AndroidManifest.xml                 # Permissions (CAMERA, VIBRATE), UPI <queries>, deep links
 ├── kotlin/com/splitpay/app/
-│   ├── SplitPayApp.kt                  # Application: WebView debugging only in debug builds
+│   ├── SplitPayApp.kt                  # Application: enables WebView debugging in debug builds only
 │   ├── MainActivity.kt                 # Slim composition root: lifecycle, insets,
 │   │                                   #   launchers, back routing, WebView setup
 │   ├── dialog/AppDialog.kt             # AppDialogBuilder + showAppDialog() popups
-│   ├── bridge/AndroidBridge.kt         # JS→Kotlin: clipboard, share, UPI, popups
+│   ├── model/
+│   │   ├── AppEvent.kt                 # Sealed events the bridge dispatches into Kotlin
+│   │   └── SplitPart.kt                # Typed representation of one installment
+│   ├── bridge/AndroidBridge.kt         # JS→Kotlin: clipboard, share, UPI, prefs, popups
+│   ├── util/
+│   │   ├── Extensions.kt               # isValidUpi(), callJs(), toast helpers, AndroidStringEncoder
+│   │   ├── PreferenceManager.kt        # SharedPreferences wrapper (theme, turbo default)
+│   │   └── UpiLinkBuilder.kt           # Validated upi://pay link construction (native side)
 │   └── webview/
-│       ├── SplitPayWebViewClient.kt    # URL routing + renderer crash recovery
+│       ├── SplitPayWebViewClient.kt    # URL routing (incl. upi:// interception), renderer crash recovery
 │       ├── SplitPayWebChromeClient.kt  # camera permission, file chooser, JS dialogs
-│       └── IntentLauncher.kt           # UPI/external intents, toast helper
+│       └── IntentLauncher.kt           # launchUpiIntent() + other external intents
 ├── assets/
 │   ├── index.html                      # markup shell (screens + modals)
 │   ├── css/styles.css                  # pen & paper theme (light + dark) + animations
-│   └── js/  app.js, jsQR.min.js,       # UI logic + bundled QR engines (offline)
-│            qrcode.min.js
+│   ├── fonts/                          # self-hosted Zilla Slab + Space Mono (OFL) — see OFL-LICENSE.txt
+│   └── js/
+│       ├── state.js, statemachine.js   # shared app state (S) + the FSM screen-flow guard
+│       ├── validator.js                # UPI ID / amount validation (single source of truth in JS)
+│       ├── upiqr.js                    # UPI QR payload build + parse, incl. the multi-account format
+│       ├── storage.js                  # localStorage wrapper: history, prefs, merchant profile
+│       ├── screens.js, nav.js          # Pay-flow screen transitions + navigation
+│       ├── split.js                    # split math + plan screen + account assignment
+│       ├── runner.js                   # auto/manual execution + receipt screen
+│       ├── merchant.js                 # Receive-mode UI: accounts, QR generation, sharing
+│       ├── camera.js                   # QR scanning (camera + gallery upload)
+│       ├── dom.js, events.js, utils.js # small shared helpers (incl. esc() for safe innerHTML)
+│       ├── bridge.js                   # swaps in native (Android) behaviour when available
+│       ├── jsQR.min.js                 # third-party QR *decoder*, attribution intact
+│       └── qrcode.min.js               # third-party QR *encoder*, attribution intact
 └── res/
-    ├── layout/dialog_custom.xml        # popup layout (icon/title/message/input/buttons)
-    ├── drawable/dialog_*               # popup card, buttons, input, badge
-    ├── values(+night)/                 # light & dark palettes, themes, strings
-    └── xml/                            # backup rules, network security, provider paths
+    ├── layout/activity_main.xml, dialog_custom.xml   # ViewBinding-backed layouts
+    ├── drawable/dialog_btn_*.xml        # popup button drawables
+    ├── values(+night)/                 # light & dark colors/themes/strings
+    └── xml/                            # backup rules, network security, FileProvider paths
 ```
 
 ### JavaScript ↔ Kotlin bridge
@@ -131,13 +173,16 @@ app/src/main/
 |---|---|
 | `AndroidBridge.getClipboardText()` | read clipboard (bypasses gesture restriction) |
 | `AndroidBridge.copyToClipboard(t)` | write clipboard on all API levels |
-| `AndroidBridge.shareText(t)` | native share sheet |
-| `AndroidBridge.openUpiLink(u)` | open UPI intent (iframe fallback) |
+| `AndroidBridge.shareText(t)` | native share sheet (receipts) |
+| `AndroidBridge.shareImage(base64Png, name)` | native share sheet for a PNG (merchant QR poster) — writes to `cache/share/` and hands it out via `FileProvider` |
 | `AndroidBridge.hasUpiApp()` | is any UPI app installed? |
-| `AndroidBridge.requestCameraPermission()` | official Android camera permission flow |
+| `AndroidBridge.setThemePref(t)` / `getThemePref()` | sync theme choice to `SharedPreferences` |
+| `AndroidBridge.setTurboPref(b)` / `getTurboPref()` | sync Turbo default to `SharedPreferences` |
 | `AndroidBridge.showPopup(t,m,btn,icon)` | 1-button native popup |
 | `AndroidBridge.showConfirmDialog(...)` / `showInputDialog(...)` | confirm/input popups; results dispatch to `onAppDialogResult(id, val)` |
-| `window.appConfirm(...) / appPrompt(...)` | Promise wrappers for the above (web fallback: `confirm`/`prompt`) |
+| `window.appConfirm(...)` / `appPrompt(...)` | Promise wrappers for the above (web fallback: `confirm`/`prompt`) |
+
+Two more bridge methods exist — `openUpiPayment(...)` and `openUpiLink(url)` (the latter explicitly commented `// Legacy` in the Kotlin source) — but the current UI doesn't call either: the actual payment launch goes through a plain `<a href="upi://...">` link, intercepted by `SplitPayWebViewClient.shouldOverrideUrlLoading` and handed to `launchUpiIntent()` directly, without crossing the JS bridge at all. Similarly, `requestCameraPermission()` exists on the bridge but isn't currently called from JS — camera permission is instead requested automatically via `getUserMedia()`, which `SplitPayWebChromeClient.onPermissionRequest` intercepts natively. Worth knowing before assuming a bridge method is on the live path.
 
 ---
 
@@ -147,7 +192,7 @@ app/src/main/
 
 ```js
 const MAX_PART = 1999;
-getMin(total)  → Math.max(1, Math.ceil(total / MAX_PART))
+getMin(total)  → Math.max(1, Math.ceil(total / MAX_PART))   // in state.js
 
 // Equal: leftover rupees spread over the FIRST parts  (₹100/3 → 34, 33, 33)
 evenParts(rem, k): base + 1 for the first (rem − base·k) parts
@@ -156,36 +201,47 @@ evenParts(rem, k): base + 1 for the first (rem − base·k) parts
 // Rule: NO two parts share the same amount.
 //   part_i = i + x_i, x = non-decreasing random composition of
 //   E = total − n(n+1)/2 with each x_i ≤ 1999 − n  ⇒ parts strictly increase.
-// Feasible band for n distinct parts in [1,1999]:
+// Feasible band for n distinct parts in [1,1999] (capped at n ≤ 200):
 //   n(n+1)/2 ≤ total ≤ n(3999−n)/2   (e.g. ₹10,000 needs ≥ 6 parts)
 // Guarantees: every part ∈ [1,1999], all amounts UNIQUE, Σ === total exactly.
-// Sum-check + startPay() additionally reject duplicate amounts in random mode.
+// A Fisher–Yates shuffle randomises the ORDER of the (otherwise ascending) parts.
 ```
 
-Old versions had a `minA > maxA` dead-end fallback and float-safe re-splits; the current engine can't produce an invalid plan by construction.
+`startPay()` additionally refuses to run unless `Σ parts === total` and every part is in `[1, 1999]` — the plan screen's sum-check bar is a live view of that same guard, not a separate check that can drift from it.
 
-### Safety rails
-- Amount sanitized: integer rupees, hard-capped at **₹10,000** (keeps installment sequences short; split math still respects the ₹1,999 MDR limit).
-- `startPay()` refuses to run unless `Σ parts === total` and all parts ∈ [1, 1999].
-- Editing a part recomputes the last part to the *exact* remainder — the sum-check (not silent rounding) flags any imbalance.
+### Multi-account merchant QR
+
+```
+upi://pay?pa=<primary UPI ID>&pn=<name>&cu=INR&spx=<acct2>~<acct3>~…
+```
+
+- `pa` is one ordinary, valid UPI ID — any UPI app that doesn't recognize `spx` simply ignores it and pays the primary account like any other merchant QR.
+- `spx` lists the remaining accounts, `~`-separated (an unreserved URI character, so it never needs escaping and can't collide with a UPI ID's own characters). Every ID — `pa` and each entry in `spx` — is validated with the same regex used everywhere else in the app; anything that fails validation is dropped, not silently coerced into an account.
+- The list is capped at **12 accounts** (`MAX_MERCHANT_UPIS` in `state.js`) and de-duplicated case-insensitively (UPI IDs aren't case-sensitive) in both `upiqr.js` (build/parse) and `merchant.js` (the accounts editor), so no code path can produce or accept more than 12.
+- All of this lives in one module, `upiqr.js`, so there's a single place that turns untrusted scanned/pasted text into data the rest of the app trusts.
+
+### Account assignment (splitting across a merchant's accounts)
+
+When the payee has more than one account, `split.js`'s `defaultAssign()` places the largest parts first, each onto whichever account has received the least so far — a greedy balance that keeps per-account totals close without needing to search for an optimal partition. Equal-amount splits fall into a plain round-robin as a side effect of that rule; random splits stay balanced because the placement, not the amounts, is what's balanced. Any part's account can be overridden by hand afterward; changing the part *count* resets overrides back to the balanced default, since a manual pick for "part 3 of 5" has no obvious meaning once there are 4 parts.
 
 ### QR scan pipeline
-Downscaled 480px frame → `getImageData` → jsQR (`dontInvert` for speed) → parse `pa/pn/am` from `upi://` links or bare UPI IDs → validate → fill the form. Torch button only appears when the camera reports `torch` capability.
+
+Downscaled 480px frame → `getImageData` → jsQR (`dontInvert` for speed) → `UpiQr.parse()` extracts `pa`/`pn`/`am`/`spx` from `upi://` links, or a bare UPI ID, or a UPI ID buried in free text → validate → fill the form (Pay mode) or the accounts list (Receive mode, importing every account found). Torch button only appears when the camera reports a `torch` capability.
 
 ---
 
 ## 🔐 Security Model
 
-- **No backend, no analytics, no tracking.** State lives in JS memory only; nothing persists (backup rules exclude everything).
-- **XSS-hardened rendering:** payee names/UPI IDs coming from scanned QR codes are HTML-escaped (`esc()`) before any `innerHTML` insertion; name field length-capped to 50 chars. A malicious QR cannot inject markup into a WebView that has a native bridge.
-- **Bridge hygiene:** all bridge methods run on the UI thread via `runOnUiThread`, validate/blank-guard inputs, and `nativeToast` caps message length.
-- **Transport:** `cleartextTrafficPermitted="false"` globally; app assets served from a virtual HTTPS origin; mixed content blocked.
-- **FileProvider** paths scoped to the app's private `receipts/` and `cache/share/` dirs (was: entire external storage).
-- **Backups disabled** (`allowBackup=false` + full data-extraction exclusions) so no residue syncs to Google.
-- **Release hygiene:** ProGuard keeps only the `@JavascriptInterface` surface; `Log.d/v/i` stripped from release.
-- **Explicitly out of scope:** the app never stores, transmits, or processes card/UPI credentials — payments happen entirely inside the user's chosen UPI app.
+Full detail — including the merchant QR's trust properties, exactly what's re-validated natively vs. in the WebView, and known limitations — now lives in **[SECURITY.md](SECURITY.md)**, so it can be kept accurate without drifting out of sync with this README. In short:
 
-Found a vulnerability? Please open a private security advisory on GitHub (Security → Advisories) instead of a public issue.
+- **No backend, no analytics, no tracking, no account.** History, preferences, and a merchant's saved accounts live in the WebView's `localStorage` on-device (namespaced `sp_*`) — nothing is uploaded anywhere. (Earlier drafts of this README said state lives in JS memory only with nothing persisted; that no longer describes the code as written, and possibly never did — `Storage` in `storage.js` explicitly persists to `localStorage`.)
+- **UPI IDs are validated twice, independently** — once in the WebView (`validator.js`) for fast feedback, and again natively (`String.isValidUpi()` in `util/Extensions.kt`) before anything is launched, so the JS layer is never the only thing standing between untrusted input and an intent.
+- **XSS-hardened rendering:** any text that could have come from a scanned QR or pasted string (payee name, UPI IDs) is passed through `esc()` before touching `innerHTML`.
+- **Transport:** `cleartextTrafficPermitted="false"` globally; the WebView only ever loads bundled assets over a virtual HTTPS origin; mixed content blocked.
+- **FileProvider** paths are scoped to the app's own `cache/share/` (QR poster images, receipts) and `files/receipts/` — never external/shared storage.
+- **Backups disabled** (`allowBackup=false` + `data_extraction_rules.xml` exclusions).
+
+Found a vulnerability? Please see the reporting process in [SECURITY.md](SECURITY.md) rather than opening a public issue.
 
 ---
 
@@ -194,9 +250,9 @@ Found a vulnerability? Please open a private security advisory on GitHub (Securi
 ### Prerequisites
 | Tool | Version |
 |------|---------|
-| Android Studio | Latest stable (must support AGP 9.4.0) |
+| Android Studio | Latest stable (must support AGP 9.4.1) |
 | JDK | 17+ (bundled in Studio) |
-| Android SDK | API 37 |
+| Android SDK | API 37 (`compileSdk`) |
 
 ### Run / Debug
 1. Open the project in Android Studio → wait for Gradle sync.
@@ -221,58 +277,32 @@ CLI build:
    ./gradlew assembleRelease  # → app-release.apk  (direct install/testing)
    ```
 
+### Working on just the UI
+
+The WebView UI has no build step of its own — you can iterate on it in a
+plain browser:
+
+```bash
+cd app/src/main/assets
+python3 -m http.server 8000
+# open http://localhost:8000/index.html
+```
+
+`window.AndroidBridge` won't exist there, so `bridge.js` falls back to
+`navigator.clipboard`, `navigator.share`, and `<a download>` automatically.
+
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! SplitPay is deliberately tiny and fully offline — please keep it that way.
+Contributions are welcome! Full guidance — project conventions, what to test before opening a PR, and the safety invariants reviewers check for — now lives in **[CONTRIBUTING.md](CONTRIBUTING.md)**. The short version:
 
-### Ground rules
-- **No new dependencies** without discussion. The UI is vanilla HTML/CSS/JS on purpose: no framework, no build step, instant load.
-- **Zero network access.** The app must keep making no outbound HTTP requests; UPI goes through Android intents only.
-- **Zero data collection.** No analytics, no tracking, nothing persisted — state lives in JS memory only.
-- **Bridge hygiene.** Every `@JavascriptInterface` method must validate/blank-guard inputs and hop to the UI thread via `runOnUiThread`. Keep the bridge surface minimal.
+- **No new dependencies** without discussion; the UI stays vanilla HTML/CSS/JS with no build step.
+- **Zero network access** stays zero — UPI goes through Android intents only, never HTTP.
+- Every user-controlled string (QR scans, pasted text) must be escaped before touching `innerHTML` — see `esc()` in `utils.js`.
+- Split math and the merchant QR format are safety-critical: read `split.js` and `upiqr.js` (and [CONTRIBUTING.md](CONTRIBUTING.md)'s notes on both) before changing either.
 
-### Project layout
-See the [Code Map](#-code-map) above. Quick orientation:
-- `MainActivity.kt` — slim composition root only (lifecycle, insets, launchers, back routing)
-- `dialog/` — custom popup builder; `bridge/` — the JS↔Kotlin contract; `webview/` — clients + intent helpers
-- `assets/index.html` — markup; `assets/css/styles.css` — theme + animations; `assets/js/app.js` — all UI logic
-
-### JS ↔ Kotlin contract (do not rename casually)
-The web layer exposes three globals that native code calls:
-- `onVisReturn()` — nudge after returning from a UPI app (called from `MainActivity.onResume`)
-- `onAppBack()` — hardware-back claim router (called from the back-press callback)
-- `onAppDialogResult(id, value)` — answers to native confirm/input dialogs
-
-If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and** `js/app.js` in the same PR.
-
-### Development workflow
-1. Fork, then branch: `feat/my-feature` or `fix/my-bugfix`.
-2. Make the change (Kotlin under `app/src/main/kotlin/`, web UI under `app/src/main/assets/`).
-3. Build and smoke-test on a **real device** (UPI apps don't run on emulators):
-   ```bash
-   ./gradlew assembleDebug
-   ```
-4. If you touched JS, keep it syntactically clean: `node --check app/src/main/assets/js/app.js`.
-5. Open a pull request describing **what** changed and **why**. Include before/after behavior for UI changes.
-
-### Code style
-- **Kotlin:** 4-space indent, KDoc on public members, `internal` visibility for module-internal APIs, explain the "why" in comments.
-- **JS:** small functions, section banners, comment intent (not mechanics). Theme names (`S`, `goTo`) are load-bearing — don't rename in drive-by refactors.
-- **CSS:** only theme variables for colors (light/dark must both work); animations restricted to `transform`/`opacity` (GPU-composited); respect `prefers-reduced-motion`.
-
-### Safety invariants (reviewers will check)
-- Split math stays **integer-exact** — no floats anywhere near amounts (see Core Algorithms).
-- Every user-controlled string (QR scans, payee names) is HTML-escaped via `esc()` before touching `innerHTML`.
-- Amount caps: hard ₹10,000 per transaction, ₹1,999 per part — don't loosen without discussion.
-
-### Repo hygiene (check before you push)
-- `.gitignore` covers `build/`, `.gradle/`, `.idea/`, `local.properties`, keystores and `graphify-out/` — never force-add these.
-- `local.properties` is machine-specific; it regenerates when you open the project in Android Studio.
-- Never commit signing keys (`*.jks`, `*.keystore`) or passwords — release credentials come from environment variables.
-- The `graphify-out/` folder (knowledge-graph analysis) is optional local tooling output; keep it untracked.
-- Screenshots live in `screenshots/` (`1.jpg`–`6.jpg`, in screen order). Keep them reasonably small (under ~300 KB each) and free of real UPI IDs, names, or phone numbers.
+---
 
 ## 🐛 Troubleshooting
 
@@ -281,6 +311,7 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 | Gradle sync fails | Check internet; File → Invalidate Caches |
 | UPI app doesn't open | Install GPay / PhonePe / Paytm / BHIM first |
 | Camera dark / no scan | Grant Camera permission; flash/torch appears only if the device supports it |
+| Merchant QR looks "busy" / hard to scan | Many long UPI IDs make a dense code; Receive mode warns when this happens — try fewer or shorter IDs, or share the QR as an image and print it larger |
 | `JAVA_HOME` not set (CLI builds) | Point `JAVA_HOME` at Android Studio's bundled JBR |
 | Build fails on SDK | Install API 37 via Tools → SDK Manager |
 | Payments get declined after a few parts | Your bank/UPI app may enforce per-day transaction-count or amount limits, or flag rapid repeat payments — use Manual mode and space them out |
@@ -292,12 +323,12 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 | Property | Value |
 |----------|-------|
 | Min Android | 7.0 (API 24) |
-| Target Android | 15 (API 35) |
+| Target Android | 16 (API 36) |
 | Architecture | Single Activity + WebView shell + native bridge |
-| UI assets | `index.html` + `css/styles.css` + `js/app.js` + bundled jsQR/qrcodejs |
+| UI assets | `index.html` + `css/styles.css` + ~16 JS modules (see [Code Map](#-code-map)) + bundled jsQR/qrcodejs |
 | Permissions | CAMERA, VIBRATE |
-| Data collected | None |
-| License | MIT |
+| Data stored | UPI history, preferences, and merchant accounts — on-device only, in the WebView's `localStorage`; nothing is transmitted anywhere |
+| License | MIT — see note at the top of this README about the `LICENSE` file |
 
 ---
 
@@ -306,6 +337,7 @@ If you change any of these, update `MainActivity.kt`, `AndroidBridge.kt` **and**
 - SplitPay is an independent, community project. It is **not affiliated with, endorsed by, or sponsored by NPCI, UPI, Google Pay, PhonePe, Paytm, BHIM, or any bank.** All product names are trademarks of their respective owners.
 - MDR rules, thresholds, and caps (including the 0.4% figure and ₹300 cap shown in the savings calculator) are set by regulators and change over time. The numbers in the app are **estimates for illustration**, not financial or legal advice — please verify against current NPCI / RBI circulars.
 - Splitting one payment into several means several separate UPI transactions. Bank limits, failed/pending parts, and merchant-side handling are outside this app's control. **Always verify each part in your UPI app's history.**
+- A multi-account merchant QR is only as trustworthy as the accounts the merchant put into it — SplitPay validates UPI ID *format*, not account *ownership*, the same way it can't for a plain single-account UPI QR today.
 - The software is provided "as is", without warranty of any kind. See [LICENSE](LICENSE).
 
 ---
@@ -316,13 +348,28 @@ SplitPay is released under the **[MIT License](LICENSE)** — free to use, modif
 
 ---
 
-🎯 Recent Changes
-- Fixed live QR code scanning issue (now works with inverted QR codes)
-- Updated target SDK to 35 (Android 15)
-- Added camera stream cleanup on page hide/unload to prevent battery drain
-- Enhanced UPI URL validation in openUpiLink to prevent malicious intents
-- Restricted dialog titles to always include 'SplitPay' to prevent spoofing
-- Added screenshots, MIT license, and disclaimer for the open-source release
+## 🎯 Recent Changes
+
+- **Native dialog results were silently broken for every confirm/prompt popup.** `MainActivity.dispatchDialogResult()` ran an already-jsString()-encoded callback id *and* a pre-quoted `"true"`/`"false"` string through `callJs()`, which encodes its own arguments — so both got double-escaped, `onAppDialogResult()` never matched the right callback, and every native Cancel/Skip/Clear confirmation (and every `appPrompt()` input) only ever resolved via bridge.js's 30-second timeout fallback, always as `false`/`null`, regardless of what the user actually tapped or typed. Fixed by passing a real `Boolean` and the raw (single-encoding) callback id; `showInputDialog`'s hand-built JSON payload had the identical bug and is fixed the same way, via `runJs()` instead of `callJs()`.
+- **A missing color resource would have failed every build.** `themes.xml` (light + dark) referenced `@color/accent_green`, which doesn't exist anywhere in `colors.xml` — fixed to reuse the existing `@color/ok` token.
+- **The Receive-mode account counter never updated.** Two unrelated elements shared `id="m-count"` (the Manual Ledger's progress counter and the Receiving Accounts badge); `getElementById` silently resolved to the first one every time, so `merchant.js` was updating an invisible off-screen counter instead. Renamed the manual-ledger one to `mr-count`.
+- **The About screen's whole accent-green/heading styling was silently broken.** `--accent`, `--accent-glow`, `--ff-head`, and `--ink1` were used throughout the About-modal CSS but never defined anywhere in the stylesheet — added as theme-aware aliases onto the existing `--ok`/`--ink` tokens in section 1 of `styles.css`.
+- **Removed a rule that risked hiding every icon in the app**: `svg:not(.icn):not([style*="inline-block"]) { display: none; }` matched the hidden `<symbol>`-library container at the top of `index.html`, and Chromium's handling of `display:none` on a `<use>` element's source tree is inconsistent enough that this could suppress every icon in the app. The container was already correctly hidden via `position:absolute;width:0;height:0;overflow:hidden` — the extra rule had no purpose and only downside.
+- **Fonts are now bundled locally** (`assets/fonts/`, SIL OFL) instead of loaded from `fonts.googleapis.com`/`fonts.gstatic.com` at runtime — the app's own "Fully offline" / "makes no network requests" claims (About screen, this README, SECURITY.md) weren't actually true until now.
+- **Target SDK raised 35 → 36** — Google Play has required new apps and updates to target Android 16 (API 36) since August 31, 2026; the app could no longer be submitted or updated on 35.
+- **`androidx.core:core-splashscreen` bumped 1.0.1 → 1.2.0** (current stable; fixes several splash→activity theme-handoff bugs in exactly the code path `MainActivity.onCreate()` runs on every launch).
+- **Added a legacy (non-adaptive) launcher icon** for API 24–25 (`res/mipmap/ic_launcher.xml`), layering the same background/foreground vectors the API 26+ adaptive icon uses. Previously the icon only resolved on API 26+ (`mipmap-anydpi-v26`) even though `minSdk` is 24, so the app installed with no launcher icon at all on Android 7.0/7.1.
+- **`android:launchMode="singleTask"` + `onNewIntent()`** added for the `splitpay://` deep-link intent filter, which previously had no launch-mode handling and would have spawned a stacked duplicate Activity if that link were ever opened while the app was running.
+- Corrected the MDR copy (About screen, disclaimer, done-screen savings card) to reflect NPCI's actual framework: 0.4% on P2M UPI above ₹2,000 takes effect **15 October 2026** (not yet in force as of this writing), and merchants receiving up to ₹1 lakh/month via UPI are exempt entirely — the app previously implied the fee was already universally in effect.
+- `qrcode.min.js`'s vendored-file attribution header (noted as missing in a previous pass) has since been added; this README and the Code Map's `qrcode.min.js` note were updated to match — they'd gone stale against the actual file.
+- **Added Receive mode:** merchants can bundle up to 12 UPI accounts into a single QR (`upiqr.js`, `merchant.js`); SplitPay payers scanning it can split across every account, with balanced default routing and manual overrides.
+- Fixed: tapping Back then Continue on the Payee screen silently did nothing (`goTo()` was bypassing the FSM's transition guard).
+- Fixed: "New Payment" from the receipt screen could strand the user on that screen instead of returning to Payee.
+- Fixed: dark theme never applied due to a malformed CSS rule (a selector combined with an `@media` block, which browsers silently discard).
+- Fixed: Share/Copy on Android called a JS function that didn't exist, throwing at runtime.
+- Fixed: two layout XML files (`activity_main.xml`, `dialog_custom.xml`) were sitting directly under `res/` instead of `res/layout/`, which would fail to resolve the `ActivityMainBinding`/`DialogCustomBinding` ViewBinding classes referenced in `MainActivity.kt`/`AppDialog.kt` — moved into `res/layout/`.
+- Fixed a stale comment in `file_paths.xml` claiming the app "shares nothing today," which stopped being true once `shareImage()` was added.
+- Previously: live QR scanning fixed for inverted QR codes; target SDK raised to 35; camera stream cleanup added on page hide/unload; UPI URL validation hardened in the native link-opening path; dialog titles locked to always include "SplitPay" to resist spoofing; screenshots, MIT license, and disclaimer added for the open-source release.
 
 
 <div align="center">
@@ -336,4 +383,3 @@ Built with ❤️ for the open-source AI community.
 ⭐ **If you find SplitPay useful, consider giving the project a star.**
 
 </div>
-

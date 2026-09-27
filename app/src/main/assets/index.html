@@ -1,366 +1,1147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- PWA manifest not needed in native app -->
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<!-- Apple PWA meta tags removed: irrelevant in an Android native WebView app -->
-<meta name="theme-color" content="#F5F2EB">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#F0EDE5" media="(prefers-color-scheme:light)">
+<meta name="theme-color" content="#15181E" media="(prefers-color-scheme:dark)">
 <title>SplitPay</title>
-<meta name="android-app" content="splitpay">
+<!-- FIX: was <link>s to fonts.googleapis.com/fonts.gstatic.com. This is a
+     fully local, packaged app whose own "About → Privacy" screen (see
+     js/about.js) and README/SECURITY.md explicitly claim it makes zero
+     outbound network requests — but every launch was silently fetching
+     both fonts from Google's CDN over the internet, contradicting that
+     claim (and simply failing offline, where the OS-default fallback font
+     would be used instead with no visible error). Zilla Slab and Space
+     Mono are both SIL Open Font License, so they're bundled locally under
+     fonts/ and loaded via @font-face in styles.css instead — see the
+     "0. LOCAL FONTS" section at the top of that file. -->
 <link rel="stylesheet" href="css/styles.css">
 </head>
-
 <body>
 
-<!-- Hidden SVG Library -->
-<svg>
-  <symbol id="ic-cam" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></symbol>
-  <symbol id="ic-img" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
-  <symbol id="ic-pen" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></symbol>
-  <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
-  <symbol id="ic-arr-r" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></symbol>
-  <symbol id="ic-arr-l" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></symbol>
-  <symbol id="ic-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></symbol>
-  <symbol id="ic-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
-  <symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h7v7h-7zM14 18h3M18 14v3"></path></symbol>
-  <symbol id="ic-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></symbol>
-  <symbol id="ic-shuffle" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></symbol>
-  <symbol id="ic-bot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4M8 16h.01M16 16h.01"></path></symbol>
-  <symbol id="ic-hand" viewBox="0 0 24 24"><path d="M12 2v10M12 12a2 2 0 0 1-2-2V6a2 2 0 0 0-4 0v10a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-4a2 2 0 0 1 4 0v4a2 2 0 0 1-2 2h-4"></path></symbol>
-  <symbol id="ic-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></symbol>
-  <symbol id="ic-logo" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></symbol>
-  <symbol id="ic-theme" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></symbol>
-  <symbol id="ic-bolt" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></symbol>
+<!-- ═══ SVG ICON LIBRARY ═══════════════════════════════════════════ -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden;">
+  <symbol id="ic-cam"    viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="ic-img"    viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+  <symbol id="ic-pen"    viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="ic-copy"   viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="ic-arr-r"  viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
+  <symbol id="ic-arr-l"  viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+  <symbol id="ic-check"  viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="ic-x"      viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="ic-qr"     viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h7v7h-7zM14 18h3M18 14v3"/></symbol>
+  <symbol id="ic-repeat" viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="ic-shuffle"viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></symbol>
+  <symbol id="ic-bot"    viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/></symbol>
+  <symbol id="ic-hand"   viewBox="0 0 24 24"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></symbol>
+  <symbol id="ic-share"  viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+  <symbol id="ic-moon"   viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="ic-sun"    viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+  <symbol id="ic-bolt"   viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="ic-plus"   viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="ic-trash"  viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+  <symbol id="ic-up"     viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></symbol>
+  <symbol id="ic-store"  viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12.5V20h14v-7.5"/></symbol>
+  <symbol id="ic-gear"   viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="ic-send"   viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
+  <symbol id="ic-info"   viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3"/><line x1="12" y1="12" x2="12" y2="16"/></symbol>
+  <symbol id="ic-help"   viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="ic-star"   viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+  <symbol id="ic-gift"   viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></symbol>
+  <symbol id="ic-dash"   viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></symbol>
+  <!-- Brand mark — exact scale(4/9) port of the launcher icon layers
+       (ic_launcher_background.xml + ic_launcher_foreground.xml on a 48
+       viewport), clipped to a rounded badge. Guarantees the in-app logo
+       is pixel-identical to the launcher icon at any size.
+       stroke="none" on the wrapper groups defeats the .icn class's
+       inherited `stroke: currentColor` for fill-only shapes. -->
+  <symbol id="ic-logo" viewBox="0 0 48 48">
+    <!-- Brand mark: the real logo.png, embedded inline so the in-app
+         logo is pixel-identical to the reference artwork everywhere
+         (topbar, About page, Privacy footer). Clipped to a rounded
+         badge to match the app icon's shape. -->
+    <defs>
+      <clipPath id="ic-logo-clip">
+        <rect x="1" y="1" width="46" height="46" rx="10"/>
+      </clipPath>
+    </defs>
+    <image href="data:image/png;base64,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"
+           x="1" y="1" width="46" height="46"
+           clip-path="url(#ic-logo-clip)"
+           preserveAspectRatio="xMidYMid slice"/>
+  </symbol>
 </svg>
 
-<div class="toast" id="toast">
-  <svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg>
+<!-- ═══ TOAST ═══════════════════════════════════════════════════════ -->
+<div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true">
+  <svg class="icn icn-sm" aria-hidden="true"><use href="#ic-check"/></svg>
   <span id="toast-msg"></span>
 </div>
 
-<div class="topbar">
+<!-- ═══ TOPBAR ══════════════════════════════════════════════════════ -->
+<header class="topbar">
   <div class="logo">
-    <div class="logo-ic"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-logo"></use></svg></div>
+    <div class="logo-ic" aria-hidden="true">
+      <svg class="icn" style="display:inline-block;width:34px;height:34px;"><use href="#ic-logo"/></svg>
+    </div>
     SplitPay
   </div>
-  <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle Theme">
-    <svg class="icn" style="display:inline-block;"><use href="#ic-theme"></use></svg>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <button class="theme-btn" id="dash-btn" onclick="openDashboard()" aria-label="Open dashboard: payment and receive history" title="Dashboard">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-dash"/></svg>
+    </button>
+    <button class="theme-btn" id="settings-btn" onclick="openSettings()" aria-label="Open settings: default UPI app and preferences" title="Settings">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-gear"/></svg>
+    </button>
+    <button class="theme-btn" id="about-btn" onclick="openAbout()" aria-label="About SplitPay" title="About">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-info"/></svg>
+    </button>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-moon"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ═══ MODE SWITCH (Pay | Receive) ═════════════════════════════════ -->
+<nav class="modebar" id="modebar" role="tablist" aria-label="App mode">
+  <button class="mb on" id="mb-pay" role="tab" aria-selected="true" onclick="setAppMode('pay')">
+    <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-send"/></svg> Pay
   </button>
-</div>
+  <button class="mb" id="mb-recv" role="tab" aria-selected="false" onclick="setAppMode('receive')">
+    <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg> Receive
+  </button>
+</nav>
 
-<div class="stepbar">
+<!-- ═══ STEP BAR ════════════════════════════════════════════════════ -->
+<nav class="stepbar" role="progressbar" aria-label="Payment progress">
   <div class="sd act" id="sd1"><div class="circ">1</div><div class="slbl">Payee</div></div>
-  <div class="sline" id="sl12"></div>
-  <div class="sd" id="sd2"><div class="circ">2</div><div class="slbl">Amount</div></div>
-  <div class="sline" id="sl23"></div>
-  <div class="sd" id="sd3"><div class="circ">3</div><div class="slbl">Plan</div></div>
-  <div class="sline" id="sl34"></div>
-  <div class="sd" id="sd4"><div class="circ">4</div><div class="slbl">Pay</div></div>
-</div>
+  <div class="sline"  id="sl12"></div>
+  <div class="sd"     id="sd2"><div class="circ">2</div><div class="slbl">Amount</div></div>
+  <div class="sline"  id="sl23"></div>
+  <div class="sd"     id="sd3"><div class="circ">3</div><div class="slbl">Plan</div></div>
+  <div class="sline"  id="sl34"></div>
+  <div class="sd"     id="sd4"><div class="circ">4</div><div class="slbl">Pay</div></div>
+</nav>
 
-<!-- ═══ Scrollable middle: screens render here; header & dock stay fixed ═══ -->
-<div id="app-main">
+<!-- ═══ SCREENS ═════════════════════════════════════════════════════ -->
+<main id="app-main">
 
-<!-- ═══ STEP 1: PAYEE ═══ -->
-<div class="screen active" id="sc1">
+<!-- ── STEP 1: PAYEE ─────────────────────────────────────────────── -->
+<section class="screen active" id="sc1" aria-label="Enter payee">
 <div class="wrap">
+
   <div class="card">
     <div class="ch">
-      <svg class="icn" style="display:inline-block;"><use href="#ic-pen"></use></svg> Payee Details
+      <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-pen"/></svg>
+      Who are you paying?
     </div>
-    <div class="tabs">
-      <button class="tab on" id="t-scan" onclick="upiTab('scan')"><svg class="icn" style="display:inline-block;"><use href="#ic-qr"></use></svg> Scan QR</button>
-      <button class="tab" id="t-type" onclick="upiTab('type')"><svg class="icn" style="display:inline-block;"><use href="#ic-pen"></use></svg> Enter UPI</button>
+
+    <div class="tabs" role="tablist">
+      <button class="tab on" id="t-scan" role="tab" aria-selected="true"  aria-controls="tp-scan" onclick="upiTab('scan')">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg> Scan QR
+      </button>
+      <button class="tab"    id="t-type" role="tab" aria-selected="false" aria-controls="tp-type" onclick="upiTab('type')">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-pen"/></svg> Enter UPI
+      </button>
     </div>
-    
-    <div class="tab-panel on" id="tp-scan">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 0 8px;">
-        <div style="font-size:1rem;color:var(--ink-light);text-align:center;font-style:italic;">Scan a merchant or peer QR code</div>
-        <button class="btn btn-pri btn-full" onclick="openCam()"><svg class="icn" style="display:inline-block;"><use href="#ic-cam"></use></svg> Open Camera</button>
-        <div style="display:flex;gap:16px;width:100%;">
-          <label class="btn btn-ghost btn-full" style="padding:16px;">
-            <svg class="icn" style="display:inline-block;"><use href="#ic-cam"></use></svg> Photo
-            <input type="file" accept="image/*" capture="environment" onchange="scanUpload(this)" style="display:none;">
+
+    <!-- Scan tab -->
+    <div class="tab-panel on" id="tp-scan" role="tabpanel">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0 4px;">
+        <p style="font-size:.95rem;color:var(--ink3);text-align:center;font-style:italic;line-height:1.5;">
+          Scan any UPI QR code — merchant, peer, or invoice
+        </p>
+        <button class="btn btn-pri btn-full" onclick="openCam()" style="font-size:1.05rem;padding:16px;">
+          <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-cam"/></svg>
+          Open Camera
+        </button>
+        <div style="display:flex;gap:10px;width:100%;">
+          <label class="btn btn-ghost btn-full" style="cursor:pointer;">
+            <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-cam"/></svg> Photo
+            <input type="file" accept="image/*" capture="environment" onchange="scanUpload(this)" style="display:none;" aria-label="Take photo of QR">
           </label>
-          <label class="btn btn-ghost btn-full" style="padding:16px;">
-            <svg class="icn" style="display:inline-block;"><use href="#ic-img"></use></svg> Gallery
-            <input type="file" accept="image/*" onchange="scanUpload(this)" style="display:none;">
+          <label class="btn btn-ghost btn-full" style="cursor:pointer;">
+            <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-img"/></svg> Gallery
+            <input type="file" accept="image/*" onchange="scanUpload(this)" style="display:none;" aria-label="Choose QR image from gallery">
           </label>
         </div>
       </div>
     </div>
-    
-    <div class="tab-panel" id="tp-type">
+
+    <!-- Type tab -->
+    <div class="tab-panel" id="tp-type" role="tabpanel">
       <div class="fld" style="position:relative;">
-        <label class="lbl">UPI ID</label>
-        <div style="display:flex;gap:12px;align-items:center;">
+        <label class="lbl" for="iupi">UPI ID</label>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="flex:1;position:relative;">
-            <input type="text" id="iupi" placeholder="name@bank" autocomplete="off" spellcheck="false">
+            <input type="text" id="iupi" placeholder="name@bank"
+                   autocomplete="off" spellcheck="false" inputmode="email"
+                   aria-label="UPI Virtual Payment Address">
+            <div id="upi-history" class="upi-hist" style="display:none;"
+                 role="listbox" aria-label="Recent UPI IDs"></div>
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="pasteUPI()" style="padding: 16px;">
-            <svg class="icn" style="display:inline-block;"><use href="#ic-copy"></use></svg>
+          <button class="btn btn-ghost" onclick="pasteUPI()"
+                  style="padding:15px 14px;flex-shrink:0;" aria-label="Paste UPI ID">
+            <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-copy"/></svg>
           </button>
         </div>
       </div>
-      <div class="fld"><label class="lbl">Name (optional)</label><input type="text" id="iname" placeholder="Merchant or Person"></div>
+      <div class="fld">
+        <label class="lbl" for="iname">Payee name <span style="font-weight:400;opacity:.6;">(optional)</span></label>
+        <input type="text" id="iname" placeholder="Merchant or person" autocomplete="name">
+      </div>
+
+      <!-- Shown when a SplitPay merchant QR (several accounts) was scanned -->
+      <div class="multi-note" id="multi-note" style="display:none;" role="status">
+        <div class="mn-head">
+          <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg>
+          Split-ready merchant · <span id="mn-count">0 accounts</span>
+        </div>
+        <p class="mn-sub">When you split the payment, the parts are spread across these accounts.</p>
+        <div class="mn-list" id="mn-list"></div>
+      </div>
     </div>
   </div>
-  
-  <div class="info-row">
-    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> Bypasses the 0.4% Government MDR for merchants</div>
-    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> Auto-splits large transactions via UPI</div>
-    <div class="info-item"><svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg> PIN required per execution</div>
+
+  <div class="info-row" role="note">
+    <div class="info-item">
+      <svg class="icn icn-sm" style="display:inline-block;color:var(--ok);" aria-hidden="true"><use href="#ic-check"/></svg>
+      Bypasses 0.4% merchant MDR on amounts over ₹2,000
+    </div>
+    <div class="info-item">
+      <svg class="icn icn-sm" style="display:inline-block;color:var(--ok);" aria-hidden="true"><use href="#ic-check"/></svg>
+      Each part requires your UPI PIN — fully secure
+    </div>
+    <div class="info-item">
+      <svg class="icn icn-sm" style="display:inline-block;color:var(--ok);" aria-hidden="true"><use href="#ic-check"/></svg>
+      Works with every bank and UPI app
+    </div>
   </div>
 </div>
 <div class="bottom-dock">
-  <button class="btn btn-pri btn-full" onclick="toStep2()">Continue <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></button>
+  <button class="btn btn-pri btn-full" onclick="toStep2()" style="font-size:1.1rem;padding:16px;">
+    Continue <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
+  </button>
 </div>
-</div>
+</section>
 
-<!-- ═══ STEP 2: AMOUNT ═══ -->
-<div class="screen" id="sc2">
+<!-- ── STEP 2: AMOUNT ────────────────────────────────────────────── -->
+<section class="screen" id="sc2" aria-label="Enter amount">
 <div class="wrap">
+
   <div class="payee-badge">
-    <div class="pb-av" id="pb-av">?</div>
-    <div style="flex:1; overflow:hidden;">
+    <div class="pb-av" id="pb-av" aria-hidden="true">?</div>
+    <div style="flex:1;min-width:0;">
       <div class="pb-name" id="pb-name">Unknown</div>
-      <div class="pb-upi" id="pb-upi-val">—</div>
+      <div class="pb-upi"  id="pb-upi-val">—</div>
     </div>
+    <svg class="icn icn-sm" style="display:inline-block;color:var(--ok);flex-shrink:0;" aria-label="Verified" aria-hidden="true"><use href="#ic-check"/></svg>
   </div>
 
   <div class="card">
     <div class="ch">Total Amount</div>
+
     <div class="fld bigamt">
-      <div class="pfw"><span class="pfx">₹</span>
-        <input type="number" id="iamt" placeholder="0" min="1" max="10000" inputmode="numeric" oninput="sanitizeAmount(this)">
+      <div class="pfw">
+        <span class="pfx" aria-hidden="true">₹</span>
+        <input type="number" id="iamt"
+               placeholder="0" min="1" max="10000"
+               inputmode="numeric"
+               oninput="sanitizeAmount(this)"
+               aria-label="Amount in rupees">
       </div>
     </div>
-    <div class="chips">
-      <div class="chip" onclick="sa(2500)">2,500</div>
-      <div class="chip" onclick="sa(5000)">5,000</div>
-      <div class="chip" onclick="sa(10000)">10K</div>
+
+    <div class="chips" role="group" aria-label="Quick amounts">
+      <div class="chip" onclick="sa(2000)" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')sa(2000)">₹2,000</div>
+      <div class="chip" onclick="sa(3000)" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')sa(3000)">₹3,000</div>
+      <div class="chip" onclick="sa(5000)" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')sa(5000)">₹5,000</div>
+      <div class="chip" onclick="sa(7500)" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')sa(7500)">₹7,500</div>
+      <div class="chip" onclick="sa(10000)" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')sa(10000)">₹10,000</div>
     </div>
-    <div class="fld" style="margin-top:24px;"><label class="lbl">Payment Note (optional)</label>
-      <input type="text" id="inote" placeholder="Invoice, Rent, etc.">
+    <div class="mdr-hint" id="mdr-hint" style="display:none;" role="status" aria-live="polite"></div>
+
+    <div class="fld" style="margin-top:20px;">
+      <label class="lbl" for="inote">
+        Payment note <span style="font-weight:400;opacity:.6;">(optional)</span>
+      </label>
+      <input type="text" id="inote" placeholder="Invoice, rent, etc."
+             maxlength="50" autocomplete="off">
     </div>
   </div>
+
 </div>
 <div class="bottom-dock">
-  <button class="btn btn-ghost" style="flex:0 0 auto;" onclick="goTo(1)"><svg class="icn" style="display:inline-block;"><use href="#ic-arr-l"></use></svg></button>
-  <button class="btn btn-pri btn-full" onclick="toStep3()">Split Plan <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></button>
+  <button class="btn btn-ghost" onclick="FSM.go(FSM.ST.PAYEE)" aria-label="Back to payee" style="padding:16px 18px;">
+    <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-l"/></svg>
+  </button>
+  <button class="btn btn-pri btn-full" onclick="toStep3()" style="font-size:1.1rem;padding:16px;">
+    Plan Split <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
+  </button>
 </div>
-</div>
+</section>
 
-<!-- ═══ STEP 3: PLAN ═══ -->
-<div class="screen" id="sc3">
+<!-- ── STEP 3: PLAN ──────────────────────────────────────────────── -->
+<section class="screen" id="sc3" aria-label="Configure split plan">
 <div class="wrap">
+
   <div class="card">
     <div class="ch">Installment Plan</div>
+
     <div class="split-ctrl">
       <div>
-        <div class="sc-label">Total Parts</div>
-        <div style="font-size:0.85rem;color:var(--ink-light);font-style:italic;margin-top:4px;">Max ₹1,999 per part</div>
+        <div class="sc-label">Parts</div>
+        <div class="sc-sub">Max ₹1,999 per part</div>
       </div>
       <div class="sc-btns">
-        <button class="sc-btn" onclick="adjParts(-1)">−</button>
-        <div class="sc-val" id="sc-val">0</div>
-        <button class="sc-btn" onclick="adjParts(+1)">+</button>
+        <button class="sc-btn" onclick="adjParts(-1)" aria-label="Fewer parts">−</button>
+        <div class="sc-val" id="sc-val" aria-live="polite" aria-label="Number of parts">0</div>
+        <button class="sc-btn" onclick="adjParts(+1)" aria-label="More parts">+</button>
       </div>
     </div>
 
-    <div class="split-toggle">
-      <button class="stog on" id="st-eq" onclick="setSplitMode('equal')"><svg class="icn" style="display:inline-block;"><use href="#ic-repeat"></use></svg> Equal</button>
-      <button class="stog" id="st-rnd" onclick="setSplitMode('random')"><svg class="icn" style="display:inline-block;"><use href="#ic-shuffle"></use></svg> Random</button>
+    <div class="split-toggle" role="group" aria-label="Split mode">
+      <button class="stog on" id="st-eq" onclick="setSplitMode('equal')" aria-pressed="true">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-repeat"/></svg>
+        Equal
+      </button>
+      <button class="stog" id="st-rnd" onclick="setSplitMode('random')" aria-pressed="false">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-shuffle"/></svg>
+        Random
+      </button>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div class="sum-check ok" id="sum-check" style="margin:0;flex:1;margin-right:12px;">Total Matches</div>
-      <button class="btn btn-ghost btn-sm" id="reshuffle-btn" onclick="reshuffle()" style="display:none; padding:12px;"><svg class="icn" style="display:inline-block;"><use href="#ic-shuffle"></use></svg></button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+      <div class="sum-check ok" id="sum-check" aria-live="polite" style="flex:1;margin:0;">—</div>
+      <button class="btn btn-ghost" id="reshuffle-btn" onclick="reshuffle()"
+              style="display:none;padding:12px;flex-shrink:0;" aria-label="Re-randomise amounts">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-shuffle"/></svg>
+      </button>
     </div>
 
-    <div class="split-preview" id="split-preview"></div>
+    <div class="split-preview" id="split-preview" role="list" aria-label="Split amounts"></div>
+  </div>
+
+  <!-- Multi-account merchant: who receives what -->
+  <div class="card" id="acct-card" style="display:none;">
+    <div class="ch">
+      <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg>
+      Receiving accounts
+      <span class="ch-tag" id="acct-tag">0</span>
+    </div>
+    <p class="acct-help">Each part is paid to one account. Change the account on any part above, or:</p>
+    <button class="btn btn-ghost btn-full btn-sm" onclick="spreadParts()" style="margin-bottom:14px;">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-shuffle"/></svg>
+      One part per account
+    </button>
+    <div class="acct-sum" id="acct-sum"></div>
   </div>
 
   <div class="card">
     <div class="ch">Execution Mode</div>
+
     <div class="modegrid">
-      <div class="modec on" id="mc-auto" onclick="pickMode('auto')">
-        <div class="mico"><svg class="icn icn-lg" style="display:inline-block;"><use href="#ic-bot"></use></svg></div>
+      <div class="modec on" id="mc-auto" onclick="pickMode('auto')"
+           role="radio" aria-checked="true" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')pickMode('auto')">
+        <div class="mico">
+          <svg class="icn icn-lg" style="display:inline-block;" aria-hidden="true"><use href="#ic-bot"/></svg>
+        </div>
         <div class="mtitle">Auto-Run</div>
-        <div class="mdesc">Launches the app automatically.</div>
+        <div class="mdesc">Opens the UPI app automatically for each part.</div>
       </div>
-      <div class="modec" id="mc-man" onclick="pickMode('manual')">
-        <div class="mico"><svg class="icn icn-lg" style="display:inline-block;"><use href="#ic-hand"></use></svg></div>
+      <div class="modec" id="mc-man" onclick="pickMode('manual')"
+           role="radio" aria-checked="false" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' ')pickMode('manual')">
+        <div class="mico">
+          <svg class="icn icn-lg" style="display:inline-block;" aria-hidden="true"><use href="#ic-hand"/></svg>
+        </div>
         <div class="mtitle">Manual</div>
-        <div class="mdesc">Tap to pay each part.</div>
+        <div class="mdesc">Tap to launch each part yourself.</div>
       </div>
     </div>
 
     <div class="turbo-row" id="turbo-row">
       <div>
         <div class="turbo-title">Turbo Auto-Next</div>
-        <div class="turbo-desc">Bypass manual confirmations.</div>
+        <div class="turbo-desc">Skip confirmation between consecutive parts.</div>
       </div>
-      <label class="sw"><input type="checkbox" id="turbo-chk" checked><div class="sw-track"></div><div class="sw-thumb"></div></label>
+      <label class="sw" aria-label="Turbo mode toggle">
+        <input type="checkbox" id="turbo-chk" checked>
+        <div class="sw-track"></div>
+        <div class="sw-thumb"></div>
+      </label>
     </div>
   </div>
+
 </div>
 <div class="bottom-dock">
-  <button class="btn btn-ghost" style="flex:0 0 auto;" onclick="goTo(2)"><svg class="icn" style="display:inline-block;"><use href="#ic-arr-l"></use></svg></button>
-  <button class="btn btn-pri btn-full" id="startbtn" onclick="startPay()">Start Sequence</button>
+  <button class="btn btn-ghost" onclick="FSM.go(FSM.ST.AMOUNT)" aria-label="Back to amount" style="padding:16px 18px;">
+    <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-l"/></svg>
+  </button>
+  <button class="btn btn-pri btn-full" onclick="startPay()" id="startbtn"
+          style="font-size:1.1rem;padding:16px;">
+    Start Sequence
+  </button>
 </div>
-</div>
+</section>
 
-<!-- ═══ STEP 4A: AUTO RUNNER ═══ -->
-<div class="screen" id="sc4a">
+<!-- ── STEP 4A: AUTO RUNNER ──────────────────────────────────────── -->
+<section class="screen" id="sc4a" aria-label="Auto payment running">
 <div class="wrap">
+
   <div class="progrow">
     <div class="progtop">
       <span class="proglbl" id="a-lbl">Execution Progress</span>
-      <span class="progcount" id="a-count">1/0</span>
+      <span class="progcount" id="a-count" aria-live="polite">1/0</span>
     </div>
-    <div class="dots" id="a-dots"></div>
+    <div class="dots" id="a-dots" role="list" aria-label="Payment parts progress"></div>
   </div>
 
+  <!-- Pay card -->
   <div class="paybig" id="a-paybig">
     <div class="ppart" id="a-ppart">Part 1 of 1</div>
-    <div class="pamt" id="a-pamt">₹0</div>
-    <div class="psub" id="a-psub">of ₹0 total</div>
-    
-    <a id="a-link" class="openbtn" onclick="onOpen()">Open UPI App <svg class="icn" style="display:inline-block;"><use href="#ic-arr-r"></use></svg></a>
-    
-    <!-- Added QR & Done Explicit Actions -->
-    <div style="display:flex; gap:12px; margin-top:16px;">
-      <button class="btn btn-ghost" style="flex:1; padding: 14px;" onclick="openCurQR()">
-        <svg class="icn" style="display:inline-block;"><use href="#ic-qr"></use></svg> Show QR
+    <div class="pamt"  id="a-pamt">₹0</div>
+    <div class="psub"  id="a-psub">of ₹0 total</div>
+    <div class="pto" id="a-pto" style="display:none;">Paying to <b id="a-pto-val">—</b></div>
+
+    <a id="a-link" class="openbtn" onclick="onOpen()">
+      <span id="a-link-txt">Open UPI App</span>
+      <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
+    </a>
+
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn btn-ghost btn-full" onclick="openCurQR()" style="padding:13px;">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg>
+        QR Code
       </button>
-      <button class="btn btn-ghost" style="flex:1; padding: 14px; color: var(--ok); border-color: var(--ok);" onclick="markCurDone()">
-        <svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg> Mark Done
+      <button class="btn btn-ghost btn-full"
+              onclick="markCurDone()"
+              style="padding:13px;color:var(--ok);border-color:var(--ok-bdr);">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg>
+        Mark Done
       </button>
     </div>
 
-    <button class="retrylink" id="a-retry" onclick="retryCur()" style="display:none;"><svg class="icn" style="display:inline-block;"><use href="#ic-repeat"></use></svg> Retry Transfer</button>
+    <button class="retrylink" id="a-retry" onclick="retryCur()" style="display:none;">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-repeat"/></svg>
+      Retry this transfer
+    </button>
   </div>
 
-  <div class="turbo-state" id="a-ts" style="display:none;">
+  <!-- Turbo launch state -->
+  <div class="turbo-state" id="a-ts" style="display:none;" aria-live="polite">
     <div class="ts-title" id="ts-ttl">Launching…</div>
-    <div class="ts-sub" id="ts-sub">Redirecting to UPI</div>
+    <div class="ts-sub">Redirecting to UPI app</div>
     <div class="ts-bar"><div class="ts-fill" id="ts-fill"></div></div>
   </div>
 
-  <div class="cdcard" id="a-cd" style="display:none;">
-    <div style="font-size:0.95rem;color:var(--ink-light);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;font-family:'Space Mono',monospace;">Next Part In</div>
-    <div class="cdnum" id="a-cdnum">3</div>
-    <button class="btn btn-ghost" style="margin-top:24px;width:100%;" onclick="pauseAuto()">Pause Sequence</button>
+  <!-- Countdown -->
+  <div class="cdcard" id="a-cd" style="display:none;" aria-live="polite">
+    <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink3);font-family:'Space Mono',monospace;">
+      Next Part In
+    </p>
+    <div class="cdnum" id="a-cdnum" aria-label="Seconds until next part">3</div>
+    <button class="btn btn-ghost btn-full" onclick="pauseAuto()" style="margin-top:20px;">
+      Pause Sequence
+    </button>
   </div>
-</div>
-<div class="bottom-dock" style="background:transparent;border:none;">
-  <button class="btn btn-ghost btn-full" style="background:var(--surf);" onclick="skipCur()">Skip Part</button>
-  <button class="btn btn-ghost btn-full" style="background:var(--surf);color:var(--err);" onclick="cancelAll()"><svg class="icn" style="display:inline-block; margin-right: 6px;"><use href="#ic-x"></use></svg> Cancel All</button>
-</div>
-</div>
 
-<!-- ═══ STEP 4B: MANUAL RUNNER ═══ -->
-<div class="screen" id="sc4b">
+</div>
+<div class="bottom-dock" style="background:transparent;border:none;gap:10px;">
+  <button class="btn btn-ghost btn-full" onclick="skipCur()"
+          style="background:var(--surf);">
+    Skip Part
+  </button>
+  <button class="btn btn-ghost btn-full" onclick="cancelAll()"
+          style="background:var(--surf);color:var(--err);border-color:var(--err-bdr);">
+    <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-x"/></svg>
+    Cancel All
+  </button>
+</div>
+</section>
+
+<!-- ── STEP 4B: MANUAL RUNNER ────────────────────────────────────── -->
+<section class="screen" id="sc4b" aria-label="Manual payment ledger">
 <div class="wrap">
+
   <div class="progrow">
     <div class="progtop">
       <span class="proglbl">Manual Ledger</span>
-      <span class="progcount" id="m-count">0/0</span>
+      <span class="progcount" id="mr-count" aria-live="polite">0/0</span>
     </div>
-    <div class="dots" id="m-dots"></div>
+    <div class="dots" id="m-dots" role="list" aria-label="Payment parts progress"></div>
   </div>
-  <div class="mlist-wrap" id="mlist"></div>
+
+  <div class="mlist-wrap" id="mlist" role="list" aria-label="Payment parts"></div>
+
 </div>
 <div class="bottom-dock" style="background:transparent;border:none;">
-  <button class="btn btn-ghost btn-full" style="background:var(--surf);" onclick="cancelAll()"><svg class="icn" style="display:inline-block; margin-right: 6px;"><use href="#ic-x"></use></svg> Cancel Sequence</button>
+  <button class="btn btn-ghost btn-full" onclick="cancelAll()"
+          style="background:var(--surf);color:var(--err);border-color:var(--err-bdr);">
+    <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-x"/></svg>
+    Cancel Sequence
+  </button>
 </div>
-</div>
+</section>
 
-<!-- ═══ STEP 5: DONE ═══ -->
-<div class="screen" id="sc5">
+<!-- ── STEP 5: DONE ──────────────────────────────────────────────── -->
+<section class="screen" id="sc5" aria-label="Payment complete">
 <div class="wrap">
   <div class="donecard">
-    <svg class="icn" style="width: 72px; height: 72px; margin-bottom:20px; display:inline-block;"><use href="#ic-check"></use></svg>
+
+    <!-- Animated check icon -->
+    <div class="done-icon" id="done-icon" aria-hidden="true">
+      <svg class="icn icn-lg" style="display:inline-block;"><use href="#ic-check"/></svg>
+    </div>
+
     <div class="dtitle" id="d-title">Ledger Closed</div>
-    <div class="dsub" id="d-sub">Payment sequence finished.</div>
-    
+    <div class="dsub"   id="d-sub">Sequence finished.</div>
+
     <div class="dstats">
-      <div class="dstat"><div class="v" id="d-total">₹0</div><div class="l">Paid</div></div>
-      <div class="dstat"><div class="v" id="d-parts">0/0</div><div class="l">Parts</div></div>
+      <div class="dstat">
+        <div class="v" id="d-total">₹0</div>
+        <div class="l">Total Paid</div>
+      </div>
+      <div class="dstat">
+        <div class="v" id="d-parts">0/0</div>
+        <div class="l">Parts Done</div>
+      </div>
     </div>
-    
-    <!-- MDR Savings Card -->
+
     <div class="savings-card" id="d-savings-card" style="display:none;">
-      <div class="savings-lbl">Merchant MDR Avoided</div>
-      <div class="savings-val" id="d-savings-val">₹0.00</div>
-      <div class="savings-sub">Based on September 2026 Government guidelines (0.4% fee bypassed)</div>
+      <div class="savings-lbl">MDR Saved</div>
+      <div class="savings-val" id="d-savings-val">₹0</div>
+      <div class="savings-sub">0.4% NPCI MDR bypassed (effective 15 Oct 2026)</div>
     </div>
-    
-    <div class="receipt" id="d-receipt"></div>
-    
-    <div style="display:flex;gap:16px;">
-      <button class="btn btn-ghost btn-full" onclick="shareWA()"><svg class="icn" style="display:inline-block;"><use href="#ic-share"></use></svg> Share</button>
-      <button class="btn btn-ghost" style="flex:0 0 auto; padding:18px 24px;" onclick="copyReceipt()"><svg class="icn" style="display:inline-block;"><use href="#ic-copy"></use></svg></button>
+
+    <div class="receipt" id="d-receipt" aria-label="Payment receipt"></div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost btn-full" onclick="shareWA()">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-share"/></svg>
+        Share
+      </button>
+      <button class="btn btn-ghost" onclick="copyReceipt()"
+              style="padding:14px 18px;" aria-label="Copy receipt to clipboard">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-copy"/></svg>
+      </button>
     </div>
   </div>
 </div>
 <div class="bottom-dock">
-  <button class="btn btn-pri btn-full" onclick="reset()">New Payment</button>
+  <button class="btn btn-pri btn-full" onclick="reset()"
+          style="font-size:1.1rem;padding:16px;">
+    New Payment
+  </button>
 </div>
-</div>
-</div><!-- /#app-main -->
+</section>
 
-<!-- ═══ MODALS ═══ -->
-<div class="modal-full hide" id="cam-modal">
+<!-- ── RECEIVE MODE 1: MERCHANT ACCOUNTS ─────────────────────────── -->
+<section class="screen" id="scm1" aria-label="Merchant accounts">
+<div class="wrap">
+
+  <div class="card">
+    <div class="ch">
+      <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg>
+      Your business
+    </div>
+    <div class="fld" style="margin-bottom:0;">
+      <label class="lbl" for="m-name">Business name <span style="font-weight:400;opacity:.6;">(shown to payers)</span></label>
+      <input type="text" id="m-name" maxlength="50" placeholder="e.g. Sharma Traders"
+             autocomplete="organization" oninput="merchantNameInput(this)">
+      <p class="m-hint warn" id="m-name-hint" style="display:none;"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">
+      <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg>
+      Receiving accounts
+      <span class="ch-tag" id="m-count">0 / 12</span>
+    </div>
+
+    <div class="fld" style="margin-bottom:10px;">
+      <label class="lbl" for="m-vpa">Add UPI ID</label>
+      <div class="m-addrow">
+        <input type="text" id="m-vpa" placeholder="name@bank" autocomplete="off" spellcheck="false"
+               inputmode="email" aria-label="UPI ID to add"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();merchantAdd();}">
+        <button class="btn btn-pri" id="m-add-btn" onclick="merchantAdd()" aria-label="Add UPI ID">
+          <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-plus"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="m-scanrow">
+      <button class="btn btn-ghost btn-sm btn-full" id="m-scan-btn" onclick="openCam('merchant')">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-cam"/></svg> Scan a QR
+      </button>
+      <label class="btn btn-ghost btn-sm btn-full" id="m-gal-btn" style="cursor:pointer;">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-img"/></svg> From gallery
+        <input type="file" accept="image/*" onchange="scanUpload(this,'merchant')" style="display:none;" aria-label="Choose a UPI QR image">
+      </label>
+    </div>
+
+    <div class="m-pips" id="m-pips" aria-hidden="true"></div>
+    <div class="m-list" id="m-list" role="list" aria-label="Receiving accounts"></div>
+    <p class="m-hint">The <b>first</b> account is the primary. Ordinary UPI apps that scan your QR pay only that one — so put your main account first.</p>
+  </div>
+
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-pri btn-full" onclick="merchantGenerate()" style="font-size:1.1rem;padding:16px;">
+    Generate QR <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg>
+  </button>
+</div>
+</section>
+
+<!-- ── RECEIVE MODE 2: THE QR ────────────────────────────────────── -->
+<section class="screen" id="scm2" aria-label="Merchant QR code">
+<div class="wrap">
+
+  <div class="card qrcard">
+    <div class="qr-name" id="mq-name">Merchant QR</div>
+    <div class="qr-sub"  id="mq-sub"></div>
+    <div class="qrbox">
+      <canvas id="mq-canvas" role="img" aria-label="Merchant payment QR code"></canvas>
+    </div>
+    <p class="qr-note" id="mq-note"></p>
+    <p class="m-hint warn" id="mq-dense" style="display:none;"></p>
+  </div>
+
+  <details class="card m-details">
+    <summary id="mq-det-title">Accounts in this QR</summary>
+    <div class="m-list" id="mq-list"></div>
+  </details>
+
+</div>
+<div class="bottom-dock">
+  <button class="btn btn-ghost" onclick="merchantEdit()" aria-label="Edit accounts" style="padding:16px 18px;">
+    <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-pen"/></svg>
+  </button>
+  <button class="btn btn-pri btn-full" onclick="merchantShare()" style="font-size:1.1rem;padding:16px;">
+    <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-share"/></svg> Share QR
+  </button>
+</div>
+</section>
+
+</main><!-- /#app-main -->
+
+<!-- ═══ MODALS ═══════════════════════════════════════════════════════ -->
+
+<!-- Camera -->
+<div class="modal-full hide" id="cam-modal" role="dialog" aria-modal="true" aria-label="QR Scanner">
   <div class="cam-topbar">
     <span class="cam-title">Scan QR Code</span>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button class="cam-btn" id="torch-btn" onclick="toggleTorch()" style="display:none;" aria-label="Toggle Flash"><svg class="icn"><use href="#ic-bolt"></use></svg></button>
-      <button class="cam-close" onclick="closeCam()" aria-label="Close Scanner"><svg class="icn"><use href="#ic-x"></use></svg></button>
+    <div style="display:flex;gap:10px;">
+      <button class="cam-btn" id="torch-btn" onclick="toggleTorch()"
+              style="display:none;" aria-label="Toggle flash">
+        <svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-bolt"/></svg>
+      </button>
+      <button class="cam-close" onclick="closeCam()" aria-label="Close scanner">
+        <svg class="icn icn-sm" style="display:inline-block;stroke-width:3;"><use href="#ic-x"/></svg>
+      </button>
     </div>
   </div>
   <div class="cam-body">
-    <video id="scan-video" autoplay playsinline muted></video>
-    <canvas id="scan-canvas" style="display:none;"></canvas>
-    <div class="scan-frame" id="scan-frame">
-      <div class="corner c-tl"></div><div class="corner c-tr"></div>
-      <div class="corner c-bl"></div><div class="corner c-br"></div>
+    <video id="scan-video" autoplay playsinline muted aria-hidden="true"></video>
+    <canvas id="scan-canvas" style="display:none;" aria-hidden="true"></canvas>
+    <div class="scan-frame" aria-hidden="true">
+      <div class="corner c-tl"></div>
+      <div class="corner c-tr"></div>
+      <div class="corner c-bl"></div>
+      <div class="corner c-br"></div>
+      <div class="scan-line"></div>
     </div>
-    <div class="cam-hint">Point at a UPI QR code</div>
+    <p class="cam-hint" id="cam-hint">Point camera at a UPI QR code</p>
   </div>
 </div>
 
-<div class="modal hide" id="qr-modal" onclick="bgClickModal('qr-modal', event)">
-  <div class="msheet" style="text-align: center;">
-    <div class="shandle"></div>
-    <div class="stitle">Scan to Pay</div>
-    <div class="ssub" id="qr-sub">Scan this QR with any UPI app</div>
-    <div id="qr-box" style="display:inline-block; padding:20px; background:#fff; border:2px solid var(--bdr); border-radius:12px; margin-bottom:24px;"></div>
+<!-- QR Code display -->
+<div class="modal hide" id="qr-modal"
+     onclick="bgClickModal('qr-modal',event)"
+     role="dialog" aria-modal="true" aria-label="Payment QR code">
+  <div class="msheet" style="text-align:center;">
+    <div class="shandle" aria-hidden="true"></div>
+    <h2 class="stitle">Scan to Pay</h2>
+    <p class="ssub">Use any UPI app to scan this code</p>
+    <div id="qr-box"
+         style="display:inline-block;padding:18px;background:#fff;
+                border:2.5px solid var(--bdr);border-radius:var(--r);
+                margin-bottom:24px;box-shadow:var(--shd);"
+         aria-label="QR code"></div>
     <button class="btn btn-pri btn-full" onclick="closeModal('qr-modal')">Close</button>
   </div>
 </div>
 
-<div class="modal hide" id="confirm-modal" onclick="bgClickModal('confirm-modal', event)">
+<!-- Confirm sheet -->
+<div class="modal hide" id="confirm-modal"
+     onclick="bgClickModal('confirm-modal',event)"
+     role="dialog" aria-modal="true" aria-label="Confirm payment status">
   <div class="msheet">
-    <div class="shandle"></div>
-    <div class="stitle" id="sh-title">Payment Status</div>
-    <div class="ssub" id="sh-sub">Did the transaction complete successfully?</div>
-    <div class="sbtns" id="sbtns">
-      <button class="btn btn-ghost" style="color:var(--err);" onclick="onConfirm(false)"><svg class="icn" style="display:inline-block;"><use href="#ic-x"></use></svg> Failed</button>
-      <button class="btn btn-pri" onclick="onConfirm(true)"><svg class="icn" style="display:inline-block;"><use href="#ic-check"></use></svg> Paid</button>
+    <div class="shandle" aria-hidden="true"></div>
+    <h2 class="stitle" id="sh-title">Payment Status</h2>
+    <p class="ssub" id="sh-sub">Did the transaction complete successfully?</p>
+    <div class="sbtns">
+      <button class="btn btn-ghost btn-full"
+              onclick="onConfirm(false)"
+              style="color:var(--err);border-color:var(--err-bdr);">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-x"/></svg>
+        Failed
+      </button>
+      <button class="btn btn-pri btn-full" onclick="onConfirm(true)">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg>
+        Paid ✓
+      </button>
     </div>
   </div>
 </div>
 
-<!-- Scripts -->
-<!-- QR engine + generator — bundled locally so scanning works offline -->
+<!-- ═══ DASHBOARD (Pay + Receive history) ═══════════════════════════ -->
+<div class="modal-full dash-modal hide" id="dash-modal" role="dialog" aria-modal="true" aria-label="Dashboard">
+  <div class="dash-topbar">
+    <span class="dash-title">Dashboard</span>
+    <button class="dash-close" onclick="closeDashboard()" aria-label="Close dashboard">
+      <svg class="icn icn-sm" style="display:inline-block;stroke-width:3;" aria-hidden="true"><use href="#ic-x"/></svg>
+    </button>
+  </div>
+
+  <div class="dash-tabs" role="tablist" aria-label="Dashboard section">
+    <button class="dt on" id="dt-pay" role="tab" aria-selected="true" onclick="dashTab('pay')">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-send"/></svg> Pay history
+    </button>
+    <button class="dt" id="dt-recv" role="tab" aria-selected="false" onclick="dashTab('receive')">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg> Receive history
+    </button>
+  </div>
+
+  <div class="dash-body">
+    <div class="dash-panel" id="dash-pay-panel" role="tabpanel">
+      <div class="dash-stats" id="dash-pay-stats"></div>
+      <div class="dash-list" id="dash-pay-list" role="list"></div>
+      <button class="btn btn-ghost btn-full btn-sm" id="dash-pay-clear" style="display:none;margin-top:6px;" onclick="dashClearPay()">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-trash"/></svg> Clear pay history
+      </button>
+    </div>
+    <div class="dash-panel" id="dash-recv-panel" role="tabpanel" style="display:none;">
+      <div class="dash-stats" id="dash-recv-stats"></div>
+      <div class="dash-list" id="dash-recv-list" role="list"></div>
+      <button class="btn btn-ghost btn-full btn-sm" id="dash-recv-clear" style="display:none;margin-top:6px;" onclick="dashClearRecv()">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-trash"/></svg> Clear receive history
+      </button>
+    </div>
+    <p class="dash-note">Stored only on this device — nothing here is uploaded anywhere. Deleting a record can't be undone.</p>
+  </div>
+</div>
+
+
+<!-- ═══ SETTINGS MODAL ═══════════════════════════════════════════════ -->
+<div class="modal-full dash-modal hide" id="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
+  <div class="dash-topbar">
+    <span class="dash-title">Settings</span>
+    <button class="dash-close" onclick="closeSettings()" aria-label="Close settings">
+      <svg class="icn icn-sm" style="display:inline-block;stroke-width:3;" aria-hidden="true"><use href="#ic-x"/></svg>
+    </button>
+  </div>
+
+  <div class="settings-body">
+
+    <!-- ── DEFAULT UPI APP ─────────────────────────────────────── -->
+    <div class="set-card">
+      <div class="set-card-title">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-send"/></svg>
+        UPI App for Payments
+      </div>
+      <p class="set-card-sub">
+        Choose which UPI app opens when you pay. Picking a default avoids the
+        “possible fraud” warning some UPI apps show for third-party apps.
+      </p>
+      <div id="upi-app-list" role="radiogroup" aria-label="Default UPI app"></div>
+    </div>
+
+    <!-- ── INFO SUMMARY ────────────────────────────────────────── -->
+    <div class="set-card">
+      <div class="set-card-title">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-info"/></svg>
+        Overview
+      </div>
+      <div id="settings-summary"></div>
+    </div>
+
+    <!-- ── DATA ────────────────────────────────────────────────── -->
+    <div class="set-card">
+      <div class="set-card-title">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-shield"/></svg>
+        Data
+      </div>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="settingsClearAllData()" style="margin-top:8px;color:var(--err);border-color:var(--err-bdr);">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-trash"/></svg>
+        Clear all data
+      </button>
+      <p class="set-card-sub" style="margin-top:10px;">
+        Deletes pay &amp; receive history, saved UPI IDs, amounts and preferences
+        from this device. Your default UPI app choice is kept.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ ABOUT MODAL ══════════════════════════════════════════════════ -->
+<div class="modal-full about-modal hide" id="about-modal" role="dialog" aria-modal="true" aria-label="About SplitPay">
+
+  <div class="about-topbar">
+    <div class="about-logo-row">
+      <div class="logo-ic" aria-hidden="true" style="width:32px;height:32px;">
+        <svg class="icn" style="display:inline-block;width:30px;height:30px;"><use href="#ic-logo"/></svg>
+      </div>
+      <span class="about-app-name">SplitPay</span>
+    </div>
+    <button class="dash-close" onclick="closeAbout()" aria-label="Close about">
+      <svg class="icn icn-sm" style="display:inline-block;stroke-width:3;" aria-hidden="true"><use href="#ic-x"/></svg>
+    </button>
+  </div>
+
+  <div class="about-tabs" role="tablist" aria-label="About section">
+    <button class="at on" id="at-about" role="tab" aria-selected="true" onclick="aboutTab('about')">About</button>
+    <button class="at" id="at-how" role="tab" aria-selected="false" onclick="aboutTab('how')">How it works</button>
+    <button class="at" id="at-faq" role="tab" aria-selected="false" onclick="aboutTab('faq')">FAQ</button>
+    <button class="at" id="at-privacy" role="tab" aria-selected="false" onclick="aboutTab('privacy')">Privacy</button>
+  </div>
+
+  <div class="about-body">
+
+    <!-- ── ABOUT TAB ─────────────────────────────────────────────── -->
+    <div class="about-panel" id="ap-about" role="tabpanel">
+
+      <div class="about-hero">
+        <div class="about-hero-icon" aria-hidden="true">
+          <svg class="icn" style="display:inline-block;width:56px;height:56px;"><use href="#ic-logo"/></svg>
+        </div>
+        <div class="about-hero-title">SplitPay</div>
+        <div class="about-hero-tag">Beat the MDR. Pay smarter.</div>
+        <div class="about-version-chip">Version 3.0 · Built for India</div>
+      </div>
+
+      <div class="about-section">
+        <div class="about-section-head">What is SplitPay?</div>
+        <p class="about-body-text">
+          SplitPay lets you pay any merchant or person in multiple small UPI transfers — each ₹1,999 or less —
+          instead of one large payment. This bypasses the NPCI MDR (Merchant Discount Rate) fee that banks charge
+          merchants on UPI transactions above ₹2,000.
+        </p>
+        <p class="about-body-text" style="margin-top:10px;">
+          The app is entirely on-device: no servers, no sign-ups, no data uploaded anywhere. Your payment history
+          lives only on this phone.
+        </p>
+      </div>
+
+      <div class="about-feature-grid">
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg></div>
+          <div class="af-title">QR Scan</div>
+          <div class="af-desc">Scan any UPI QR code — merchant, peer, or invoice</div>
+        </div>
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-bot"/></svg></div>
+          <div class="af-title">Auto-Run</div>
+          <div class="af-desc">Launches UPI app for each part automatically</div>
+        </div>
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-store"/></svg></div>
+          <div class="af-title">Merchant QR</div>
+          <div class="af-desc">Receive mode: generate a multi-account QR for your shop</div>
+        </div>
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-dash"/></svg></div>
+          <div class="af-title">Dashboard</div>
+          <div class="af-desc">Full on-device history of every split payment</div>
+        </div>
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-shuffle"/></svg></div>
+          <div class="af-title">Random Split</div>
+          <div class="af-desc">Unique amounts per part to avoid bank-side pattern detection</div>
+        </div>
+        <div class="about-feature">
+          <div class="af-icon"><svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-shield"/></svg></div>
+          <div class="af-title">Secure</div>
+          <div class="af-desc">Every part requires your UPI PIN — no payment is made silently</div>
+        </div>
+      </div>
+
+      <div class="about-savings-banner">
+        <div class="asb-head">
+          <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-bolt"/></svg>
+          MDR Savings Calculator
+        </div>
+        <div class="asb-calc">
+          <div class="asb-row">
+            <span>Amount you're paying</span>
+            <div class="asb-inp-wrap">
+              <span class="asb-pfx">₹</span>
+              <input type="number" id="asb-amt" value="5000" min="2001" max="100000"
+                     inputmode="numeric" oninput="updateSavingsCalc()" aria-label="Amount for savings calculation">
+            </div>
+          </div>
+          <div class="asb-result" id="asb-result"></div>
+        </div>
+      </div>
+
+      <div class="about-disclaimer">
+        <svg class="icn icn-sm" style="display:inline-block;flex-shrink:0;margin-top:2px;" aria-hidden="true"><use href="#ic-help"/></svg>
+        <span>SplitPay is an independent tool. It is not affiliated with NPCI, any bank, or any UPI provider.
+        MDR rules are set by NPCI and may change — the 0.4% figure above takes effect 15 October 2026 and
+        doesn't apply to merchants exempt under NPCI's small-merchant threshold. Always verify current
+        regulations before use.</span>
+      </div>
+    </div>
+
+    <!-- ── HOW IT WORKS TAB ──────────────────────────────────────── -->
+    <div class="about-panel" id="ap-how" role="tabpanel" style="display:none;">
+      <div class="how-steps">
+
+        <div class="how-step">
+          <div class="hs-num">1</div>
+          <div class="hs-body">
+            <div class="hs-title">Scan or enter the payee</div>
+            <div class="hs-desc">Point the camera at any UPI QR code, or type the recipient's UPI ID (e.g. name@bank). SplitPay reads merchant QRs too — including multi-account ones.</div>
+          </div>
+        </div>
+
+        <div class="how-step">
+          <div class="hs-num">2</div>
+          <div class="hs-body">
+            <div class="hs-title">Enter the total amount</div>
+            <div class="hs-desc">Enter the full amount you need to pay — up to ₹10,000. Add an optional note like "Invoice #42" or "August rent" for your records.</div>
+          </div>
+        </div>
+
+        <div class="how-step">
+          <div class="hs-num">3</div>
+          <div class="hs-body">
+            <div class="hs-title">Plan the split</div>
+            <div class="hs-desc">SplitPay automatically calculates how many parts are needed (each ≤ ₹1,999). Choose <b>Equal</b> for identical parts, or <b>Random</b> for varied amounts. Pick Auto-Run or Manual mode.</div>
+          </div>
+        </div>
+
+        <div class="how-step">
+          <div class="hs-num">4</div>
+          <div class="hs-body">
+            <div class="hs-title">Pay each part via UPI</div>
+            <div class="hs-desc">SplitPay opens your UPI app for each part in sequence. You enter your PIN for every transfer — each payment is a fully independent, secure UPI transaction. SplitPay never touches your bank account.</div>
+          </div>
+        </div>
+
+        <div class="how-step how-step-done">
+          <div class="hs-num" style="background:var(--ok-bg);border-color:var(--ok-bdr);color:var(--ok);">
+            <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg>
+          </div>
+          <div class="hs-body">
+            <div class="hs-title">Get your receipt</div>
+            <div class="hs-desc">After all parts are paid, you see a full receipt showing every part, the MDR you avoided, and a shareable summary. Everything is saved to your on-device Dashboard.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="about-section" style="margin-top:0;">
+        <div class="about-section-head">Why ₹1,999 per part?</div>
+        <p class="about-body-text">
+          NPCI's revised MDR framework charges acquiring banks a <b>0.4% MDR</b> on UPI merchant
+          payments of <b>₹2,000 and above</b> — effective <b>15 October 2026</b>. Transactions
+          below that threshold, and merchants receiving up to ₹1 lakh/month via UPI, remain fee-free.
+          SplitPay keeps every part at ₹1,999 or less so the merchant never pays MDR on any single transfer.
+        </p>
+      </div>
+      <div class="about-section" style="margin-top:0;">
+        <p class="about-body-text" style="font-style:italic;color:var(--ink3);">
+          Note: if the merchant you're paying already falls under that ₹1 lakh/month exemption, they
+          weren't going to pay MDR on your payment either way — check with them if you're unsure.
+        </p>
+      </div>
+
+      <div class="about-section">
+        <div class="about-section-head">Receive mode (for merchants)</div>
+        <p class="about-body-text">
+          Switch to Receive mode to generate a <b>split-ready merchant QR</b>. You can bundle up to 12 UPI
+          accounts in one QR. When a SplitPay customer scans it, the parts are automatically spread across
+          your accounts. Regular UPI apps that scan your QR pay only the primary (first) account.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── FAQ TAB ────────────────────────────────────────────────── -->
+    <div class="about-panel" id="ap-faq" role="tabpanel" style="display:none;">
+
+      <div class="faq-list">
+
+        <details class="faq-item">
+          <summary class="faq-q">Is this legal?</summary>
+          <div class="faq-a">Yes. Splitting UPI payments is not prohibited by any NPCI, RBI, or bank regulation. Each transfer is a fully independent, legitimate UPI transaction. You are simply making multiple smaller payments instead of one large one.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">Does the merchant get the same total?</summary>
+          <div class="faq-a">Yes — the merchant receives every rupee. Each part hits their bank account separately. The total they receive equals the sum of all parts, which equals the amount you entered.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">What if a part fails mid-way?</summary>
+          <div class="faq-a">SplitPay tracks each part independently. If a part fails, you can retry it or skip it. The app shows exactly which parts succeeded and which didn't. A failed part never means the whole payment is reversed — only that specific part didn't go through.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">Does SplitPay work with PhonePe / GPay / Paytm?</summary>
+          <div class="faq-a">Yes — SplitPay generates standard upi:// links. Any installed UPI app that handles those links (PhonePe, GPay, Paytm, BHIM, Amazon Pay, and more) will open when SplitPay launches a part.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">What is the maximum amount?</summary>
+          <div class="faq-a">₹10,000 per split sequence (5 parts of ₹1,999 + one adjusted part). This is a product limit to keep sequences short. The underlying UPI limit depends on your bank.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">What is Turbo Auto-Next?</summary>
+          <div class="faq-a">In Auto-Run mode, Turbo launches the next part immediately after you mark the current one paid — no countdown delay. It's faster for people who pay back-to-back quickly.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">What is the Random split mode?</summary>
+          <div class="faq-a">Instead of equal parts (e.g. ₹1,667 × 3), Random generates distinct amounts (e.g. ₹982 + ₹1,104 + ₹1,414). Every amount is unique, which makes the payment pattern less predictable and may reduce bank-side fraud flags.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary class="faq-q">Can I use SplitPay without an internet connection?</summary>
+          <div class="faq-a">Yes. The app and all its features work fully offline. The only network activity is the UPI deep link that opens your UPI app — and that's handled by the UPI app, not SplitPay.</div>
+        </details>
+
+      </div>
+    </div>
+
+    <!-- ── PRIVACY TAB ────────────────────────────────────────────── -->
+    <div class="about-panel" id="ap-privacy" role="tabpanel" style="display:none;">
+
+      <div class="privacy-hero">
+        <div class="priv-icon" aria-hidden="true">
+          <svg class="icn" style="display:inline-block;width:32px;height:32px;"><use href="#ic-shield"/></svg>
+        </div>
+        <div class="priv-headline">Your data stays on your device.</div>
+        <div class="priv-sub">No accounts. No cloud. No tracking.</div>
+      </div>
+
+      <div class="privacy-list">
+
+        <div class="priv-item">
+          <div class="pi-icon ok"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">Fully offline</div>
+            <div class="pi-desc">SplitPay makes no network requests. It has no server, no API, and no backend. The only web request is loading this interface — the payment logic runs entirely on your phone.</div>
+          </div>
+        </div>
+
+        <div class="priv-item">
+          <div class="pi-icon ok"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">Local storage only</div>
+            <div class="pi-desc">Your UPI history, payment records, merchant accounts, and preferences are saved to your device's local storage (localStorage). They never leave your phone.</div>
+          </div>
+        </div>
+
+        <div class="priv-item">
+          <div class="pi-icon ok"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">No account required</div>
+            <div class="pi-desc">SplitPay never asks for your name, phone number, email, or any identity. There is nothing to sign up for.</div>
+          </div>
+        </div>
+
+        <div class="priv-item">
+          <div class="pi-icon ok"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">No analytics or tracking</div>
+            <div class="pi-desc">No analytics SDK, no crash reporter, no ad network. SplitPay cannot see how you use it.</div>
+          </div>
+        </div>
+
+        <div class="priv-item">
+          <div class="pi-icon ok"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">Camera used only for QR scanning</div>
+            <div class="pi-desc">Camera access is requested only when you tap "Open Camera." No frames are saved, recorded, or sent anywhere. The camera feed is decoded locally by jsQR (open source).</div>
+          </div>
+        </div>
+
+        <div class="priv-item">
+          <div class="pi-icon warn"><svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-help"/></svg></div>
+          <div class="pi-body">
+            <div class="pi-title">Deleting the app deletes your history</div>
+            <div class="pi-desc">Because everything is stored locally, uninstalling the app permanently deletes all your payment history and saved settings. There is no cloud backup.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="priv-footer">
+        <div class="priv-footer-logo" aria-hidden="true">
+          <svg class="icn" style="display:inline-block;width:36px;height:36px;"><use href="#ic-logo"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:0.9rem;">SplitPay</div>
+          <div style="font-size:0.78rem;color:var(--ink3);margin-top:2px;">Version 3.0 · Made in India 🇮🇳</div>
+          <div style="font-size:0.74rem;color:var(--ink3);margin-top:6px;font-style:italic;">Not affiliated with NPCI, RBI, or any bank.</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /.about-body -->
+
+</div><!-- /#about-modal -->
+
+<!-- ═══ SCRIPTS ══════════════════════════════════════════════════════
+     Load order is strict — each file depends on what's above it.    -->
 <script src="js/jsQR.min.js"></script>
 <script src="js/qrcode.min.js"></script>
+<!-- Infrastructure -->
+<script src="js/events.js"></script>
+<script src="js/dom.js"></script>
+<script src="js/state.js"></script>
+<script src="js/validator.js"></script>
+<script src="js/upiqr.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/statemachine.js"></script>
+<!-- App modules -->
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/split.js"></script>
+<script src="js/screens.js"></script>
+<script src="js/runner.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/merchant.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/settings.js"></script>
+  <script src="js/about.js"></script>
+<!-- Native bridge (last — patches existing globals) -->
+<script src="js/bridge.js"></script>
 
-<!-- App logic — bundled locally so everything works offline -->
-<script src="js/app.js"></script>
-<!-- Service Worker removed for native Android app -->
+<script>
+// ── Boot: restore theme + turbo from storage ───────────────────────
+(function boot() {
+  try {
+    const t = Storage.theme;
+    if (t && t !== 'system') document.documentElement.setAttribute('data-theme', t);
+    const tc = document.getElementById('turbo-chk');
+    if (tc) tc.checked = Storage.turboDefault;
+  } catch (_) {}
+})();
+</script>
+
 </body>
 </html>

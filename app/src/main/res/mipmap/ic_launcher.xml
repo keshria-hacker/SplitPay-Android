@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Legacy (non-adaptive) launcher icon for API 24–25.
+
+    AndroidManifest.xml's android:icon="@mipmap/ic_launcher" must resolve
+    on every supported API level. The adaptive <adaptive-icon> in
+    mipmap-anydpi-v26/ only resolves on API 26+; this covers the API
+    24–25 gap so the app always ships with a launcher icon.
+
+    Renders the actual brand logo.png directly (drawable-nodpi/
+    ic_launcher_legacy.png), matching every other surface exactly.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/ic_launcher_legacy" />
+</layer-list>
