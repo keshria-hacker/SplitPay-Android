@@ -87,7 +87,7 @@
 
 ```
 ┌────────────┐   ┌────────────┐   ┌────────────┐   ┌────────────┐   ┌──────────┐
-│ 1. PAYEE   │──▶│ 2. AMOUNT  │──▶│ 3. PLAN    │──▶│ 4. EXECUTE │──▶│ 5. DONE  │
+│ 1. PAYEE   │──▶│ 2. AMOUNT │──▶│ 3. PLAN    │──▶│4. EXECUTE │──▶│ 5. DONE  │
 │ scan/type  │   │ + chips    │   │ equal/rand │   │ auto/manual│   │ receipt  │
 │ UPI ID     │   │ + note     │   │ + accounts │   │ turbo/pause│   │ + share  │
 └────────────┘   └────────────┘   └────────────┘   └────────────┘   └──────────┘
@@ -109,11 +109,11 @@
 
 ```
 ┌──────────────────┐        ┌──────────────────┐
-│ ACCOUNTS          │──────▶│ QR                │
-│ name + up to 12    │       │ one QR, all       │
-│ UPI IDs (add/scan/ │       │ accounts encoded, │
-│ paste, reorder)    │       │ share/print        │
-└──────────────────┘        └──────────────────┘
+│ ACCOUNTS         │──────▶│ QR                │
+│ name + up to 12   │       │ one QR, all      │
+│ UPI IDs (add/scan/│       │ accounts encoded,│
+│ paste, reorder)   │       │ share/print      │
+└────────────────── ┘       └──────────────────┘
 ```
 
 Add a business name and up to 12 UPI IDs (typed, pasted several at once, or scanned from an existing QR), pick which one is primary, then generate. The QR is `upi://pay?pa=<primary>&pn=<name>&cu=INR&spx=<other accounts, `~`-separated>` — a normal UPI link that any UPI app can pay, plus one extra parameter only SplitPay looks for. See [Core Algorithms](#-core-algorithms) and [SECURITY.md](SECURITY.md) for the full format and its trust properties.
@@ -347,30 +347,6 @@ Contributions are welcome! Full guidance — project conventions, what to test b
 SplitPay is released under the **[MIT License](LICENSE)** — free to use, modify, and distribute, including commercially, as long as the copyright notice is kept.
 
 ---
-
-## 🎯 Recent Changes
-
-- **Native dialog results were silently broken for every confirm/prompt popup.** `MainActivity.dispatchDialogResult()` ran an already-jsString()-encoded callback id *and* a pre-quoted `"true"`/`"false"` string through `callJs()`, which encodes its own arguments — so both got double-escaped, `onAppDialogResult()` never matched the right callback, and every native Cancel/Skip/Clear confirmation (and every `appPrompt()` input) only ever resolved via bridge.js's 30-second timeout fallback, always as `false`/`null`, regardless of what the user actually tapped or typed. Fixed by passing a real `Boolean` and the raw (single-encoding) callback id; `showInputDialog`'s hand-built JSON payload had the identical bug and is fixed the same way, via `runJs()` instead of `callJs()`.
-- **A missing color resource would have failed every build.** `themes.xml` (light + dark) referenced `@color/accent_green`, which doesn't exist anywhere in `colors.xml` — fixed to reuse the existing `@color/ok` token.
-- **The Receive-mode account counter never updated.** Two unrelated elements shared `id="m-count"` (the Manual Ledger's progress counter and the Receiving Accounts badge); `getElementById` silently resolved to the first one every time, so `merchant.js` was updating an invisible off-screen counter instead. Renamed the manual-ledger one to `mr-count`.
-- **The About screen's whole accent-green/heading styling was silently broken.** `--accent`, `--accent-glow`, `--ff-head`, and `--ink1` were used throughout the About-modal CSS but never defined anywhere in the stylesheet — added as theme-aware aliases onto the existing `--ok`/`--ink` tokens in section 1 of `styles.css`.
-- **Removed a rule that risked hiding every icon in the app**: `svg:not(.icn):not([style*="inline-block"]) { display: none; }` matched the hidden `<symbol>`-library container at the top of `index.html`, and Chromium's handling of `display:none` on a `<use>` element's source tree is inconsistent enough that this could suppress every icon in the app. The container was already correctly hidden via `position:absolute;width:0;height:0;overflow:hidden` — the extra rule had no purpose and only downside.
-- **Fonts are now bundled locally** (`assets/fonts/`, SIL OFL) instead of loaded from `fonts.googleapis.com`/`fonts.gstatic.com` at runtime — the app's own "Fully offline" / "makes no network requests" claims (About screen, this README, SECURITY.md) weren't actually true until now.
-- **Target SDK raised 35 → 36** — Google Play has required new apps and updates to target Android 16 (API 36) since August 31, 2026; the app could no longer be submitted or updated on 35.
-- **`androidx.core:core-splashscreen` bumped 1.0.1 → 1.2.0** (current stable; fixes several splash→activity theme-handoff bugs in exactly the code path `MainActivity.onCreate()` runs on every launch).
-- **Added a legacy (non-adaptive) launcher icon** for API 24–25 (`res/mipmap/ic_launcher.xml`), layering the same background/foreground vectors the API 26+ adaptive icon uses. Previously the icon only resolved on API 26+ (`mipmap-anydpi-v26`) even though `minSdk` is 24, so the app installed with no launcher icon at all on Android 7.0/7.1.
-- **`android:launchMode="singleTask"` + `onNewIntent()`** added for the `splitpay://` deep-link intent filter, which previously had no launch-mode handling and would have spawned a stacked duplicate Activity if that link were ever opened while the app was running.
-- Corrected the MDR copy (About screen, disclaimer, done-screen savings card) to reflect NPCI's actual framework: 0.4% on P2M UPI above ₹2,000 takes effect **15 October 2026** (not yet in force as of this writing), and merchants receiving up to ₹1 lakh/month via UPI are exempt entirely — the app previously implied the fee was already universally in effect.
-- `qrcode.min.js`'s vendored-file attribution header (noted as missing in a previous pass) has since been added; this README and the Code Map's `qrcode.min.js` note were updated to match — they'd gone stale against the actual file.
-- **Added Receive mode:** merchants can bundle up to 12 UPI accounts into a single QR (`upiqr.js`, `merchant.js`); SplitPay payers scanning it can split across every account, with balanced default routing and manual overrides.
-- Fixed: tapping Back then Continue on the Payee screen silently did nothing (`goTo()` was bypassing the FSM's transition guard).
-- Fixed: "New Payment" from the receipt screen could strand the user on that screen instead of returning to Payee.
-- Fixed: dark theme never applied due to a malformed CSS rule (a selector combined with an `@media` block, which browsers silently discard).
-- Fixed: Share/Copy on Android called a JS function that didn't exist, throwing at runtime.
-- Fixed: two layout XML files (`activity_main.xml`, `dialog_custom.xml`) were sitting directly under `res/` instead of `res/layout/`, which would fail to resolve the `ActivityMainBinding`/`DialogCustomBinding` ViewBinding classes referenced in `MainActivity.kt`/`AppDialog.kt` — moved into `res/layout/`.
-- Fixed a stale comment in `file_paths.xml` claiming the app "shares nothing today," which stopped being true once `shareImage()` was added.
-- Previously: live QR scanning fixed for inverted QR codes; target SDK raised to 35; camera stream cleanup added on page hide/unload; UPI URL validation hardened in the native link-opening path; dialog titles locked to always include "SplitPay" to resist spoofing; screenshots, MIT license, and disclaimer added for the open-source release.
-
 
 <div align="center">
 
