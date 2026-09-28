@@ -6,6 +6,15 @@
 ![Platform: Android 7.0+](https://img.shields.io/badge/android-7.0%2B-brightgreen.svg)
 ![Network: none](https://img.shields.io/badge/network-none-blue.svg)
 ![Free & Open Source](https://img.shields.io/badge/free-open%20source-orange.svg)
+![Status: Beta](https://img.shields.io/badge/status-beta-yellow.svg)
+![Under Development](https://img.shields.io/badge/under-development-red.svg)
+
+> [!WARNING]
+> ### 🚧 Beta Version — Under Active Development
+> SplitPay is currently in **BETA** and is **under active development**. Features, screens, and behaviour may change, and you may run into bugs or incomplete functionality.
+> - Test with **small amounts** first and always **verify each part in your UPI app's transaction history**.
+> - Data formats (such as the multi-account merchant QR) may change between releases.
+> - Found a bug or have a suggestion? Please open an issue (or follow [SECURITY.md](SECURITY.md) for vulnerabilities).
 
 **SplitPay is free and open source.** No ads, no tracking, no backend, no account.
 
@@ -13,16 +22,45 @@
 
 ## 📸 Screenshots
 
+> Screenshots are taken from the current **beta** build and may differ slightly from future releases.
+
+### Pay mode
+
 <table>
   <tr>
     <td align="center"><img src="screenshots/1.jpg" width="220" alt="Payee screen"><br><sub><b>1.</b> Payee — scan or type a UPI ID</sub></td>
     <td align="center"><img src="screenshots/2.jpg" width="220" alt="Amount screen"><br><sub><b>2.</b> Amount — quick chips &amp; note</sub></td>
-    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split, per-account routing</sub></td>
+    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/4.jpg" width="220" alt="Execute screen"><br><sub><b>4.</b> Execute — auto-run / manual</sub></td>
-    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Receipt screen"><br><sub><b>5.</b> Done — receipt &amp; sharing</sub></td>
-    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Receive mode QR"><br><sub><b>6.</b> Receive mode — one QR for up to 12 accounts</sub></td>
+    <td align="center"><img src="screenshots/4.jpg" width="220" alt="Execution mode"><br><sub><b>4.</b> Execution mode — Auto-Run / Manual, Turbo</sub></td>
+    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Auto-run progress"><br><sub><b>5.</b> Auto-Run — pay each part in sequence</sub></td>
+    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Manual ledger"><br><sub><b>6.</b> Manual ledger — confirm each part yourself</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/7.jpg" width="220" alt="Payment complete"><br><sub><b>7.</b> Done — receipt &amp; MDR saved</sub></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+
+### Receive mode
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/8.jpg" width="220" alt="Receive accounts"><br><sub><b>8.</b> Receive — business name &amp; up to 12 UPI IDs</sub></td>
+    <td align="center"><img src="screenshots/9.jpg" width="220" alt="Merchant QR"><br><sub><b>9.</b> One QR for all accounts — share or print</sub></td>
+    <td></td>
+  </tr>
+</table>
+
+### Dashboard &amp; Settings
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/10.jpg" width="220" alt="Pay history"><br><sub><b>10.</b> Dashboard — pay history</sub></td>
+    <td align="center"><img src="screenshots/11.jpg" width="220" alt="Receive history"><br><sub><b>11.</b> Dashboard — receive history</sub></td>
+    <td align="center"><img src="screenshots/12.jpg" width="220" alt="Settings"><br><sub><b>12.</b> Settings — default UPI app &amp; data</sub></td>
   </tr>
 </table>
 
@@ -51,6 +89,8 @@
 ---
 
 ## ⬇️ Install
+
+> 🚧 **Beta build** — expect rough edges. Please test with small amounts first.
 
 1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay-Android/releases/latest/download/SplitPay-BETA.apk)
 
@@ -316,6 +356,7 @@ Contributions are welcome! Full guidance — project conventions, what to test b
 | `JAVA_HOME` not set (CLI builds) | Point `JAVA_HOME` at Android Studio's bundled JBR |
 | Build fails on SDK | Install API 37 via Tools → SDK Manager |
 | Payments get declined after a few parts | Your bank/UPI app may enforce per-day transaction-count or amount limits, or flag rapid repeat payments — use Manual mode and space them out |
+| "Possible fraud" warning from a UPI app | Some UPI apps warn on third-party launches — pick a default UPI app in **Settings → UPI App for Payments** to reduce this |
 
 ---
 
@@ -323,6 +364,7 @@ Contributions are welcome! Full guidance — project conventions, what to test b
 
 | Property | Value |
 |----------|-------|
+| Release stage | **Beta — under active development** |
 | Min Android | 7.0 (API 24) |
 | Target Android | 16 (API 36) |
 | Architecture | Single Activity + WebView shell + native bridge |
@@ -335,6 +377,7 @@ Contributions are welcome! Full guidance — project conventions, what to test b
 
 ## ⚠️ Disclaimer
 
+- 🚧 **SplitPay is a BETA release and is still under development.** It may contain bugs, incomplete features, or behaviour that changes between versions. Use it at your own risk and start with small amounts.
 - SplitPay is an independent, community project. It is **not affiliated with, endorsed by, or sponsored by NPCI, UPI, Google Pay, PhonePe, Paytm, BHIM, or any bank.** All product names are trademarks of their respective owners.
 - MDR rules, thresholds, and caps (including the 0.4% figure and ₹300 cap shown in the savings calculator) are set by regulators and change over time. The numbers in the app are **estimates for illustration**, not financial or legal advice — please verify against current NPCI / RBI circulars.
 - Splitting one payment into several means several separate UPI transactions. Bank limits, failed/pending parts, and merchant-side handling are outside this app's control. **Always verify each part in your UPI app's history.**
@@ -354,6 +397,8 @@ SplitPay is released under the **[MIT License](LICENSE)** — free to use, modif
 ### SplitPay
 
 **making large UPI payments frictionless.**
+
+> 🚧 *Beta — under active development. Feedback and bug reports are welcome!*
 
 Built with ❤️ for the open-source AI community.
 
