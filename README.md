@@ -28,17 +28,17 @@
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/1.jpg" width="220" alt="Payee screen"><br><sub><b>1.</b> Payee — scan or type a UPI ID</sub></td>
-    <td align="center"><img src="screenshots/2.jpg" width="220" alt="Amount screen"><br><sub><b>2.</b> Amount — quick chips &amp; note</sub></td>
-    <td align="center"><img src="screenshots/3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split</sub></td>
+    <td align="center"><img src="screenshots/Pay1.jpg" width="220" alt="Payee screen"><br><sub><b>1.</b> Payee — scan or type a UPI ID</sub></td>
+    <td align="center"><img src="screenshots/Pay2.jpg" width="220" alt="Amount screen"><br><sub><b>2.</b> Amount — quick chips &amp; note</sub></td>
+    <td align="center"><img src="screenshots/Pay3.jpg" width="220" alt="Plan screen"><br><sub><b>3.</b> Plan — equal or random split</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/4.jpg" width="220" alt="Execution mode"><br><sub><b>4.</b> Execution mode — Auto-Run / Manual, Turbo</sub></td>
-    <td align="center"><img src="screenshots/5.jpg" width="220" alt="Auto-run progress"><br><sub><b>5.</b> Auto-Run — pay each part in sequence</sub></td>
-    <td align="center"><img src="screenshots/6.jpg" width="220" alt="Manual ledger"><br><sub><b>6.</b> Manual ledger — confirm each part yourself</sub></td>
+    <td align="center"><img src="screenshots/Pay4.jpg" width="220" alt="Execution mode"><br><sub><b>4.</b> Execution mode — Auto-Run / Manual, Turbo</sub></td>
+    <td align="center"><img src="screenshots/Pay5.jpg" width="220" alt="Auto-run progress"><br><sub><b>5.</b> Auto-Run — pay each part in sequence</sub></td>
+    <td align="center"><img src="screenshots/Pay6.jpg" width="220" alt="Manual ledger"><br><sub><b>6.</b> Manual ledger — confirm each part yourself</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/7.jpg" width="220" alt="Payment complete"><br><sub><b>7.</b> Done — receipt &amp; MDR saved</sub></td>
+    <td align="center"><img src="screenshots/Pay7.jpg" width="220" alt="Payment complete"><br><sub><b>7.</b> Done — receipt &amp; MDR saved</sub></td>
     <td></td>
     <td></td>
   </tr>
@@ -48,8 +48,8 @@
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/8.jpg" width="220" alt="Receive accounts"><br><sub><b>8.</b> Receive — business name &amp; up to 12 UPI IDs</sub></td>
-    <td align="center"><img src="screenshots/9.jpg" width="220" alt="Merchant QR"><br><sub><b>9.</b> One QR for all accounts — share or print</sub></td>
+    <td align="center"><img src="screenshots/Reciver1.jpg" width="220" alt="Receive accounts"><br><sub><b>8.</b> Receive — business name &amp; up to 12 UPI IDs</sub></td>
+    <td align="center"><img src="screenshots/Reciver2.jpg" width="220" alt="Merchant QR"><br><sub><b>9.</b> One QR for all accounts — share or print</sub></td>
     <td></td>
   </tr>
 </table>
@@ -58,9 +58,9 @@
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/10.jpg" width="220" alt="Pay history"><br><sub><b>10.</b> Dashboard — pay history</sub></td>
-    <td align="center"><img src="screenshots/11.jpg" width="220" alt="Receive history"><br><sub><b>11.</b> Dashboard — receive history</sub></td>
-    <td align="center"><img src="screenshots/12.jpg" width="220" alt="Settings"><br><sub><b>12.</b> Settings — default UPI app &amp; data</sub></td>
+    <td align="center"><img src="screenshots/Dashboard_pay1.jpg" width="220" alt="Pay history"><br><sub><b>10.</b> Dashboard — pay history</sub></td>
+    <td align="center"><img src="screenshots/Dashboard_reciver2.jpg" width="220" alt="Receive history"><br><sub><b>11.</b> Dashboard — receive history</sub></td>
+    <td align="center"><img src="screenshots/Setting1.jpg" width="220" alt="Settings"><br><sub><b>12.</b> Settings — default UPI app &amp; data</sub></td>
   </tr>
 </table>
 
