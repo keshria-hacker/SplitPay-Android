@@ -46,7 +46,12 @@ function renderPayeeNote() {
 }
 
 document.addEventListener('input', e => {
-  if (e.target && e.target.id === 'iupi') renderPayeeNote();
+  if (e.target && e.target.id === 'iupi') {
+    // Merchant metadata belongs to the QR that was scanned. Any manual edit
+    // makes it unsafe to reuse that metadata for a different VPA.
+    S.upiParams = {};
+    renderPayeeNote();
+  }
 }, { passive: true });
 
 async function pasteUPI() {

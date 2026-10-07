@@ -19,12 +19,14 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewFeature
+import org.json.JSONObject
 import com.splitpay.app.bridge.AndroidBridge
 import com.splitpay.app.databinding.ActivityMainBinding
 import com.splitpay.app.dialog.showAppDialog
 import com.splitpay.app.dialog.showFallbackDialog
 import com.splitpay.app.model.AppEvent
 import com.splitpay.app.util.PreferenceManager
+import com.splitpay.app.util.UpiResponseParser
 import com.splitpay.app.util.callJs
 import com.splitpay.app.util.callJsDelayed
 import com.splitpay.app.util.destroySafely
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     internal var webPermissionRequest: PermissionRequest? = null
     private  var exitDialog: Dialog? = null
     internal lateinit var assetLoader: WebViewAssetLoader
+    private var pendingUpiAttemptId: String = ""
 
     private val prefs by lazy { PreferenceManager.getInstance(this) }
 
@@ -116,34 +119,28 @@ class MainActivity : AppCompatActivity() {
     ) { result ->
         val data = result.data
         val response = data?.getStringExtra("response")
-        val status = parseUpiStatus(response)
+        val parsed = UpiResponseParser.parse(response)
+        val status = parsed.status
         val jsStatus = when (status) {
             "SUCCESS" -> UpiLauncher.RESULT_SUCCESS
             "FAILURE" -> UpiLauncher.RESULT_FAILED
             else      -> UpiLauncher.RESULT_CANCELLED
         }
-        binding.webView.callJs("onUpiResult", jsStatus, response ?: "")
-    }
-
-    /**
-     * Parse the `upi://` response string's status field. Format (NPCI):
-     * "upi://pay?...&Status=SUCCESS&txnid=..." — case varies by app, so
-     * the lookup is case-insensitive.
-     */
-    private fun parseUpiStatus(response: String?): String? {
-        if (response.isNullOrBlank()) return null
-        return response.split('&')
-            .mapNotNull {
-                val i = it.indexOf('=')
-                if (i <= 0) null else it.substring(0, i).trim() to it.substring(i + 1).trim()
-            }
-            .firstOrNull { it.first.equals("Status", ignoreCase = true) }
-            ?.second
-            ?.uppercase()
+        val details = JSONObject().apply {
+            put("status", status ?: "")
+            put("txnId", parsed.transactionId)
+            put("approvalRef", parsed.approvalReference)
+            put("message", parsed.message)
+        }.toString()
+        binding.webView.callJs(
+            "onUpiResult", jsStatus, response ?: "", pendingUpiAttemptId, details
+        )
+        pendingUpiAttemptId = ""
     }
 
     /** Entry point used by [UpiLauncher] — routes the intent through the result pipe. */
-    fun startUpiIntentForResult(intent: Intent) {
+    fun startUpiIntentForResult(intent: Intent, attemptId: String = "") {
+        pendingUpiAttemptId = attemptId
         upiPaymentLauncher.launch(intent)
     }
 

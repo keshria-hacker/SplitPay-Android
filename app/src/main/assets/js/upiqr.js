@@ -29,6 +29,7 @@ const UpiQr = (() => {
   const EXTRA_PARAM = 'spx';
   const SEP         = '~';
   const MAX_ENCODED_NAME = 120;  // ≈13 Devanagari letters; stops non-Latin names bloating the QR
+  const PRESERVED_PARAMS = ['mc', 'mode', 'purpose', 'orgid', 'url'];
 
   // ─── helpers ──────────────────────────────────────────────────────
 
@@ -138,11 +139,19 @@ const UpiQr = (() => {
         ? _dec(q[EXTRA_PARAM], false).split(SEP) : [];
       const accounts = cleanList([pa, ...extra]);
       if (accounts.length) {
+        const params = {};
+        for (const key of PRESERVED_PARAMS) {
+          if (q[key] != null) {
+            const value = _dec(q[key], true).trim();
+            if (value) params[key] = value.slice(0, 200);
+          }
+        }
         return {
           accounts,
           pa: accounts[0],
           pn: q.pn != null ? _dec(q.pn, true).trim().slice(0, 50) : '',
           am: q.am != null ? _dec(q.am, true).trim() : '',
+          params,
           multi: accounts.length > 1,
         };
       }

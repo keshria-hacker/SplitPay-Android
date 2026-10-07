@@ -153,7 +153,7 @@
         <p style="font-size:.95rem;color:var(--ink3);text-align:center;font-style:italic;line-height:1.5;">
           Scan any UPI QR code — merchant, peer, or invoice
         </p>
-        <button class="btn btn-pri btn-full" onclick="openCam()" style="font-size:1.05rem;padding:16px;">
+        <button class="btn btn-pri btn-full btn-emphasis" onclick="openCam()">
           <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-cam"/></svg>
           Open Camera
         </button>
@@ -221,7 +221,7 @@
   </div>
 </div>
 <div class="bottom-dock">
-  <button class="btn btn-pri btn-full" onclick="toStep2()" style="font-size:1.1rem;padding:16px;">
+  <button class="btn btn-pri btn-full btn-emphasis" onclick="toStep2()">
     Continue <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
   </button>
 </div>
@@ -282,7 +282,7 @@
   <button class="btn btn-ghost" onclick="FSM.go(FSM.ST.PAYEE)" aria-label="Back to payee" style="padding:16px 18px;">
     <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-l"/></svg>
   </button>
-  <button class="btn btn-pri btn-full" onclick="toStep3()" style="font-size:1.1rem;padding:16px;">
+  <button class="btn btn-pri btn-full btn-emphasis" onclick="toStep3()">
     Plan Split <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
   </button>
 </div>
@@ -406,9 +406,9 @@
   </div>
 
   <!-- Pay card -->
-  <div class="paybig" id="a-paybig">
+  <div class="paybig" id="a-paybig" aria-live="polite">
     <div class="ppart" id="a-ppart">Part 1 of 1</div>
-    <div class="pamt"  id="a-pamt">₹0</div>
+    <div class="pamt"  id="a-pamt" aria-label="Current payment amount">₹0</div>
     <div class="psub"  id="a-psub">of ₹0 total</div>
     <div class="pto" id="a-pto" style="display:none;">Paying to <b id="a-pto-val">—</b></div>
 
@@ -416,15 +416,17 @@
       <span id="a-link-txt">Open UPI App</span>
       <svg class="icn" style="display:inline-block;" aria-hidden="true"><use href="#ic-arr-r"/></svg>
     </a>
+    <p class="pay-help" aria-live="polite">
+      If the UPI app rejects this payment, use QR Code instead.
+    </p>
 
-    <div style="display:flex;gap:10px;margin-top:14px;">
-      <button class="btn btn-ghost btn-full" onclick="openCurQR()" style="padding:13px;">
+    <div class="runner-actions">
+      <button class="btn btn-ghost btn-full" onclick="openCurQR()">
         <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-qr"/></svg>
         QR Code
       </button>
-      <button class="btn btn-ghost btn-full"
-              onclick="markCurDone()"
-              style="padding:13px;color:var(--ok);border-color:var(--ok-bdr);">
+      <button class="btn btn-ghost btn-full btn-success"
+              onclick="markCurDone()">
         <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-check"/></svg>
         Mark Done
       </button>
@@ -669,16 +671,19 @@
 <div class="modal hide" id="qr-modal"
      onclick="bgClickModal('qr-modal',event)"
      role="dialog" aria-modal="true" aria-label="Payment QR code">
-  <div class="msheet" style="text-align:center;">
+  <div class="msheet qr-sheet">
     <div class="shandle" aria-hidden="true"></div>
     <h2 class="stitle">Scan to Pay</h2>
     <p class="ssub">Use any UPI app to scan this code</p>
-    <div id="qr-box"
-         style="display:inline-block;padding:18px;background:#fff;
-                border:2.5px solid var(--bdr);border-radius:var(--r);
-                margin-bottom:24px;box-shadow:var(--shd);"
-         aria-label="QR code"></div>
-    <button class="btn btn-pri btn-full" onclick="closeModal('qr-modal')">Close</button>
+    <div id="qr-box" aria-label="QR code"></div>
+    <p class="ssub qr-help">Use another phone to scan, or share/save this QR first.</p>
+    <div class="qr-actions">
+      <button class="btn btn-ghost" onclick="shareCurrentQR()">Share QR</button>
+      <button class="btn btn-ghost" onclick="saveCurrentQR()">Save QR</button>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="copyCurrentUpi()">Copy UPI ID</button>
+    <p class="ssub qr-copy-help">Copy the ID to paste it manually in Paytm.</p>
+    <button class="btn btn-ghost btn-full" onclick="closeModal('qr-modal')">Close</button>
   </div>
 </div>
 
@@ -829,7 +834,7 @@
         </div>
         <div class="about-hero-title">SplitPay</div>
         <div class="about-hero-tag">Beat the MDR. Pay smarter.</div>
-        <div class="about-version-chip">Version 3.0 · Built for India</div>
+        <div class="about-version-chip">Version 1.0.0 · Built for India</div>
       </div>
 
       <div class="about-section">
@@ -902,6 +907,17 @@
         MDR rules are set by NPCI and may change — the 0.4% figure above takes effect 15 October 2026 and
         doesn't apply to merchants exempt under NPCI's small-merchant threshold. Always verify current
         regulations before use.</span>
+      </div>
+
+      <div class="about-github-card">
+        <div>
+          <div class="about-section-head">Enjoying SplitPay?</div>
+          <p class="about-body-text">Star the project on GitHub to support development and help others discover it.</p>
+        </div>
+        <button class="btn btn-ghost about-github-btn" onclick="openGitHubRepo()">
+          <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-star"/></svg>
+          Star on GitHub
+        </button>
       </div>
     </div>
 
@@ -1096,7 +1112,7 @@
         </div>
         <div>
           <div style="font-weight:700;font-size:0.9rem;">SplitPay</div>
-          <div style="font-size:0.78rem;color:var(--ink3);margin-top:2px;">Version 3.0 · Made in India 🇮🇳</div>
+          <div style="font-size:0.78rem;color:var(--ink3);margin-top:2px;">Version 1.0.0 · Made in India 🇮🇳</div>
           <div style="font-size:0.74rem;color:var(--ink3);margin-top:6px;font-style:italic;">Not affiliated with NPCI, RBI, or any bank.</div>
         </div>
       </div>
@@ -1108,10 +1124,17 @@
       <div class="about-section">
         <div class="about-section-head">Check for Updates</div>
         <div class="about-disclaimer" style="margin-top: 16px;">
-          <span>Ensure you have the latest version of SplitPay for new features and bug fixes.</span>
+          <span id="update-status" aria-live="polite">Tap below to check GitHub for the latest release.</span>
         </div>
         <div style="margin-top: 24px; text-align: center;">
-          <button class="btn primary" onclick="checkForUpdates()" style="width: 100%; max-width: 300px;">Check for Updates</button>
+          <button class="btn btn-pri btn-full" id="check-update-btn" onclick="checkForUpdates()">
+            <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-refresh"/></svg>
+            Check for latest
+          </button>
+          <a class="btn btn-ghost btn-full update-download-btn" id="update-download-btn"
+             href="#" target="_blank" rel="noopener" onclick="downloadLatest(event)" style="display:none;">
+            Download latest version
+          </a>
         </div>
       </div>
     </div>

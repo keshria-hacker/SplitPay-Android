@@ -24,6 +24,7 @@ const S = {
   name:      '',      // payee display name
   note:      '',      // optional payment note
   payees:    [],      // every receiving UPI ID (length > 1 = multi-account merchant QR)
+  upiParams: {},      // standard merchant fields preserved from a scanned UPI QR
 
   // ── Split plan ─────────────────────────────────────────────────
   splits:      [],    // integer rupee amounts (Σ === total)
@@ -39,6 +40,7 @@ const S = {
   cur:       0,       // index of current part being processed
   running:   false,
   awaiting:  false,   // waiting for user to return from UPI app
+  activeAttemptId: '', // unique id for the currently launched UPI attempt
 
   // ── Confirmation ──────────────────────────────────────────────
   confirmFor:   'auto',     // 'auto' | 'manual'
@@ -48,6 +50,7 @@ const S = {
   // ── Outcome ───────────────────────────────────────────────────
   paid:   [],   // boolean per part
   failed: [],   // boolean per part
+  paymentStatus: [], // pending | returned | confirmed | failed | cancelled
 };
 
 /** Minimum number of parts to keep every part ≤ MAX_PART. */
@@ -66,11 +69,12 @@ function getMaxParts(total) {
  */
 function resetState() {
   Object.assign(S, {
-    total: 0, upi: '', name: '', note: '', payees: [],
+    total: 0, upi: '', name: '', note: '', payees: [], upiParams: {},
     splits: [], splitMode: 'equal', customParts: null, refs: [],
     assign: [], assignManual: false,
     mode: 'auto', turbo: true, cur: 0, running: false, awaiting: false,
+    activeAttemptId: '',
     confirmFor: 'auto', cdTimer: null, mPendingIdx: -1,
-    paid: [], failed: [],
+    paid: [], failed: [], paymentStatus: [],
   });
 }

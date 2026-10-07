@@ -19,7 +19,7 @@
  *              sent to its own assigned account.
  */
 function mkLink(amt, part, ref) {
-  return 'upi://pay?' + new URLSearchParams({
+  const params = new URLSearchParams({
     pa: payeeFor(part - 1),
     pn: S.name || 'Merchant',
     am: amt.toFixed(2),
@@ -27,6 +27,13 @@ function mkLink(amt, part, ref) {
     tn: (S.note || 'Ledger') + ' P' + part + '/' + S.splits.length,
     tr: ref,
   });
+  // Preserve merchant metadata from a scanned QR. Paytm and some PSPs use
+  // these fields to determine whether an intent payment is allowed for the
+  // receiving VPA. The split amount remains authoritative.
+  Object.entries(S.upiParams || {}).forEach(([key, value]) => {
+    if (!params.has(key) && value) params.set(key, value);
+  });
+  return 'upi://pay?' + params;
 }
 
 /**
@@ -41,9 +48,14 @@ function mkLink(amt, part, ref) {
  *
  * Falls back to an <a> click in a plain browser / PWA context.
  */
-function payUpi(link) {
+function createAttemptId(part) {
+  return 'sp-' + Date.now().toString(36) + '-' + part + '-' +
+    Math.random().toString(36).slice(2, 8);
+}
+
+function payUpi(link, attemptId = S.activeAttemptId) {
   if (window.AndroidBridge && window.AndroidBridge.payWithUpi) {
-    try { AndroidBridge.payWithUpi(link); return true; } catch (e) { /* fall through */ }
+    try { AndroidBridge.payWithUpi(link, attemptId || ''); return true; } catch (e) { /* fall through */ }
   }
   const a = Object.assign(document.createElement('a'), { href: link });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -88,8 +100,10 @@ function startPay() {
   S.cur      = 0;
   S.running  = true;
   S.awaiting = false;
+  S.activeAttemptId = '';
   S.paid     = S.splits.map(() => false);
   S.failed   = S.splits.map(() => false);
+  S.paymentStatus = S.splits.map(() => 'pending');
   S.refs     = S.splits.map((_, i) => makeRef(i + 1));
 
   EventBus.emit(EV.PAY_START, {
@@ -145,9 +159,14 @@ function refreshDots(id) {
 
 // ─── QR ───────────────────────────────────────────────────────────
 
+let _currentQrLink = '';
+let _currentQrUpi = '';
+let _currentQrPart = 0;
+
 function drawQR(link) {
   const box = $('qr-box');
   if (!box) return;
+  _currentQrLink = link;
   box.innerHTML = '';
   new QRCode(box, {
     text: link, width: 200, height: 200,
@@ -157,8 +176,122 @@ function drawQR(link) {
   openModal('qr-modal');
 }
 
-function openCurQR()     { haptic('light'); drawQR(mkLink(S.splits[S.cur], S.cur + 1, S.refs[S.cur])); }
-function showManualQR(i) { haptic('light'); drawQR(mkLink(S.splits[i], i + 1, S.refs[i])); }
+function qrPngData() {
+  const box = $('qr-box');
+  const canvas = box && box.querySelector('canvas');
+  const image = box && box.querySelector('img');
+  if (!canvas && !image) return '';
+
+  const qrSize = 520;
+  const poster = document.createElement('canvas');
+  poster.width = 720;
+  poster.height = 900;
+  const ctx = poster.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, poster.width, poster.height);
+  ctx.fillStyle = '#191d25';
+  ctx.textAlign = 'center';
+  ctx.font = '700 38px Georgia, serif';
+  ctx.fillText('SplitPay Payment', poster.width / 2, 58);
+
+  const amount = S.splits[_currentQrPart];
+  ctx.font = '700 52px Georgia, serif';
+  ctx.fillText(amount != null ? '₹' + amount.toLocaleString('en-IN') : 'UPI Payment', poster.width / 2, 124);
+  ctx.fillStyle = '#596273';
+  ctx.font = '400 24px Arial, sans-serif';
+  ctx.fillText('Scan this QR with any UPI app', poster.width / 2, 164);
+
+  const drawQr = source => {
+    const size = source.width || source.naturalWidth || 200;
+    const height = source.height || source.naturalHeight || 200;
+    const scale = Math.min(qrSize / size, qrSize / height);
+    const w = size * scale;
+    const h = height * scale;
+    ctx.drawImage(source, (poster.width - w) / 2, 190, w, h);
+  };
+  drawQr(canvas || image);
+
+  const rows = [
+    ['Payee', S.name || 'Merchant'],
+    ['UPI ID', _currentQrUpi || payeeFor(_currentQrPart)],
+    ['Part', S.splits.length > 1 ? `${_currentQrPart + 1} of ${S.splits.length}` : 'Single payment'],
+    ['Reference', S.refs[_currentQrPart] || ''],
+    ['Note', S.note || ''],
+  ].filter(([, value]) => value);
+  let y = 770;
+  ctx.textAlign = 'left';
+  ctx.font = '600 20px Arial, sans-serif';
+  rows.forEach(([label, value]) => {
+    ctx.fillStyle = '#596273';
+    ctx.fillText(label, 48, y);
+    ctx.fillStyle = '#191d25';
+    ctx.font = '400 20px Arial, sans-serif';
+    const text = String(value).slice(0, 62);
+    ctx.fillText(text, 190, y);
+    ctx.font = '600 20px Arial, sans-serif';
+    y += 27;
+  });
+  return poster.toDataURL('image/png');
+}
+
+function qrFileName() {
+  return 'splitpay-payment-' + (S.refs[_currentQrPart] || 'qr') + '.png';
+}
+
+function shareCurrentQR() {
+  haptic('light');
+  const data = qrPngData();
+  if (!data) { toast('QR is not ready yet', true); return; }
+  const name = qrFileName();
+  if (window.AndroidBridge?.shareImage) {
+    try { AndroidBridge.shareImage(data.split(',')[1], name); return; } catch (_) {}
+  }
+  toast('Use Save QR to share the image', true);
+}
+
+function saveCurrentQR() {
+  haptic('light');
+  const data = qrPngData();
+  if (!data) { toast('QR is not ready yet', true); return; }
+  const name = qrFileName();
+  if (window.AndroidBridge?.saveImage) {
+    try { AndroidBridge.saveImage(data.split(',')[1], name); return; } catch (_) {}
+  }
+  const a = Object.assign(document.createElement('a'), { href: data, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  toast('QR image saved');
+}
+
+function copyCurrentUpi() {
+  haptic('light');
+  const upi = _currentQrUpi || payeeFor(S.cur);
+  try {
+    if (window.AndroidBridge?.copyToClipboard) {
+      AndroidBridge.copyToClipboard(upi);
+      toast('UPI ID copied');
+      return;
+    }
+    navigator.clipboard.writeText(upi).then(
+      () => toast('UPI ID copied'),
+      () => toast('Could not copy UPI ID', true)
+    );
+  } catch (_) {
+    toast('Could not copy UPI ID', true);
+  }
+}
+
+function openCurQR() {
+  haptic('light');
+  _currentQrPart = S.cur;
+  _currentQrUpi = payeeFor(S.cur);
+  drawQR(mkLink(S.splits[S.cur], S.cur + 1, S.refs[S.cur]));
+}
+function showManualQR(i) {
+  haptic('light');
+  _currentQrPart = i;
+  _currentQrUpi = payeeFor(i);
+  drawQR(mkLink(S.splits[i], i + 1, S.refs[i]));
+}
 
 // ─── AUTO MODE ────────────────────────────────────────────────────
 
@@ -182,6 +315,8 @@ function runPart(i) {
   show('a-paybig'); hide('a-retry'); hide('a-cd'); hide('a-ts');
   refreshDots('a-dots');
   S.awaiting = true;
+  S.activeAttemptId = createAttemptId(i + 1);
+  S.paymentStatus[i] = 'pending';
 }
 
 function onOpen()        { haptic('light'); S.awaiting = true; }
@@ -189,7 +324,9 @@ function markCurDone()   { haptic('medium'); doAutoConfirm(true); }
 function retryCur() {
   haptic('light');
   // FIX: route through the bridge (explicit package + awaited result)
-  payUpi(mkLink(S.splits[S.cur], S.cur + 1, S.refs[S.cur]));
+  S.activeAttemptId = createAttemptId(S.cur + 1);
+  S.paymentStatus[S.cur] = 'pending';
+  payUpi(mkLink(S.splits[S.cur], S.cur + 1, S.refs[S.cur]), S.activeAttemptId);
   S.awaiting = true;
   show('a-retry', 'flex');
 }
@@ -239,6 +376,7 @@ window.addEventListener('focus', onVisReturn, { passive: true });
 
 function doAutoConfirm(ok) {
   const i = S.cur;
+  S.paymentStatus[i] = ok ? 'confirmed' : 'failed';
   S.paid[i]   = ok;
   S.failed[i] = !ok;
 
@@ -307,8 +445,8 @@ function buildManualList() {
         ${S.payees.length > 1 ? `<div class="mi-to">→ ${esc(payeeFor(i))}</div>` : ''}
         <div class="mi-ref">Ref: ${esc(S.refs[i])}</div>
       </div>
-      <div id="mia${i}" style="display:flex;gap:8px;">
-        ${i === 0 ? _mActions(i, link) : '<span style="opacity:.3;padding:12px 16px;font-size:.9rem;">Wait</span>'}
+      <div id="mia${i}" class="mi-actions">
+        ${i === 0 ? _mActions(i, link) : '<span class="manual-wait">Wait</span>'}
       </div>`;
     frag.appendChild(div);
   });
@@ -317,11 +455,11 @@ function buildManualList() {
 }
 
 function _mActions(i, link) {
-  return `<button class="btn btn-ghost btn-sm" style="padding:12px;" onclick="showManualQR(${i})">
+  return `<button class="btn btn-ghost btn-sm manual-action" onclick="showManualQR(${i})">
     <svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-qr"></use></svg>
   </button>
-  <a href="${link}" class="btn btn-pri btn-sm" style="padding:12px 16px;" onclick="mPayLink(event, ${i})">Pay</a>
-  <button class="btn btn-ghost btn-sm" style="padding:12px;color:var(--ok);border-color:var(--ok);" onclick="mDone(${i})">
+  <a href="${link}" class="btn btn-pri btn-sm manual-pay" onclick="mPayLink(event, ${i})">Pay</a>
+  <button class="btn btn-ghost btn-sm btn-success manual-action" onclick="mDone(${i})">
     <svg class="icn icn-sm" style="display:inline-block;"><use href="#ic-check"></use></svg>
   </button>`;
 }
@@ -337,14 +475,20 @@ function mPayLink(ev, i) {
   if (ev) ev.preventDefault();
   mPay(i);
   const link = mkLink(S.splits[i], i + 1, S.refs[i]);
-  if (!payUpi(link)) {
+  if (!payUpi(link, S.activeAttemptId)) {
     // Browser/PWA fallback: re-arm the anchor so the default <a> nav runs.
     const a = ev && ev.target && ev.target.closest ? ev.target.closest('a') : null;
     if (a && a.href) { const tmp = Object.assign(document.createElement('a'), { href: link }); document.body.appendChild(tmp); tmp.click(); document.body.removeChild(tmp); }
   }
 }
 
-function mPay(i)  { haptic('light');  S.mPendingIdx = i; S.awaiting = true; }
+function mPay(i) {
+  haptic('light');
+  S.mPendingIdx = i;
+  S.awaiting = true;
+  S.activeAttemptId = createAttemptId(i + 1);
+  S.paymentStatus[i] = 'pending';
+}
 function mDone(i) { haptic('medium'); S.mPendingIdx = i; doManualConfirm(true); }
 
 function doManualConfirm(ok) {
@@ -352,6 +496,7 @@ function doManualConfirm(ok) {
   S.mPendingIdx = -1;
   S.paid[i]   = ok;
   S.failed[i] = !ok;
+  S.paymentStatus[i] = ok ? 'confirmed' : 'failed';
   haptic(ok ? 'medium' : 'error');
 
   EventBus.emit(EV.PAY_PART_DONE, { idx: i, amount: S.splits[i], success: ok });
@@ -405,7 +550,7 @@ async function cancelAll() {
     ? await appConfirm('Cancel Sequence', 'Cancel the entire payment sequence?', 'Cancel', 'Keep Going')
     : confirm('Cancel entire sequence?');
   if (!ok) return;
-  S.running = false; S.awaiting = false;
+  S.running = false; S.awaiting = false; S.activeAttemptId = '';
   clearInterval(S.cdTimer);
   EventBus.emit(EV.PAY_CANCEL);
   FSM.go(FSM.ST.PLAN);

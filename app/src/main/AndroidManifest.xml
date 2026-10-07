@@ -10,6 +10,7 @@
     -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Camera feature declaration (not required but improves Play Store listing) -->
     <uses-feature

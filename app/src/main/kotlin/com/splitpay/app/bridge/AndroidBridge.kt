@@ -5,9 +5,13 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.webkit.JavascriptInterface
 import android.util.Base64
+import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.splitpay.app.MainActivity
@@ -130,6 +134,49 @@ class AndroidBridge(private val activity: MainActivity) {
         }
     }
 
+    /** Save a QR PNG into the user's Pictures/SplitPay folder. */
+    @JavascriptInterface
+    fun saveImage(base64Png: String, fileName: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            activity.runOnUiThread {
+                activity.showShortToast("Use Share QR to save the image on this Android version")
+            }
+            return
+        }
+        try {
+            val bytes = Base64.decode(base64Png, Base64.DEFAULT)
+            if (bytes.isEmpty() || bytes.size > MAX_SHARE_IMAGE_BYTES) {
+                activity.runOnUiThread { activity.showShortToast("Could not save the QR image") }
+                return
+            }
+            val safeName = fileName.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                .take(60).ifBlank { "splitpay-payment-qr.png" }
+                .let { if (it.endsWith(".png", ignoreCase = true)) it else "$it.png" }
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, safeName)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/SplitPay")
+                put(MediaStore.Images.Media.IS_PENDING, 1)
+            }
+            val resolver = activity.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                ?: error("MediaStore did not return an image URI")
+            try {
+                resolver.openOutputStream(uri)?.use { it.write(bytes) }
+                    ?: error("Could not open image output stream")
+                values.clear()
+                values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                resolver.update(uri, values, null, null)
+                activity.runOnUiThread { activity.showShortToast("QR saved to Pictures/SplitPay") }
+            } catch (e: Exception) {
+                resolver.delete(uri, null, null)
+                throw e
+            }
+        } catch (_: Exception) {
+            activity.runOnUiThread { activity.showShortToast("Could not save the QR image") }
+        }
+    }
+
     // ─── UPI ──────────────────────────────────────────────────────
 
     /**
@@ -184,7 +231,7 @@ class AndroidBridge(private val activity: MainActivity) {
      * result (Google's documented anti-fraud pattern).
      */
     @JavascriptInterface
-    fun payWithUpi(link: String) {
+    fun payWithUpi(link: String, attemptId: String) {
         activity.runOnUiThread {
             val pa = runCatching { android.net.Uri.parse(link) }
                 .getOrNull()
@@ -194,7 +241,7 @@ class AndroidBridge(private val activity: MainActivity) {
                 activity.showShortToast(activity.getString(R.string.invalid_upi_url))
                 return@runOnUiThread
             }
-            UpiLauncher.launch(activity, link)
+            UpiLauncher.launch(activity, link, attemptId.take(80))
         }
     }
 

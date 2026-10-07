@@ -182,6 +182,7 @@ function handleScan(data) {
     setValue('iupi', r.pa);
     if (r.pn) setValue('iname', r.pn.slice(0, 50));
     if (r.am && parseFloat(r.am) > 0) { setValue('iamt', r.am); syncChips(); }
+    S.upiParams = r.params || {};
 
     // Must be set BEFORE upiTab('type') — that call renders the multi-account note.
     S.payees = r.multi ? r.accounts.slice() : [];

@@ -75,9 +75,11 @@
 - **Auto-Run mode** — sequences payments automatically, with a Turbo back-to-back option
 - **Manual mode** — review and confirm each part individually
 - **Show-QR fallback** — generates a payment QR for any part, scannable from a second device/app
+- **UPI intent fallback** — if a UPI app rejects direct app payment (for example, Paytm for some personal VPAs), the same part's QR opens automatically instead
+- **Payment verification prompt** — a returned UPI success/submitted response opens a confirmation prompt; verify the transaction in the UPI app history before marking the part paid
 - **Custom native popups** — pen-and-paper styled dialogs (light + dark)
 - **Receipt sharing** — copy, or share via WhatsApp / any installed app
-- **In-App Updates** — check for and download the latest version directly from the About menu
+- **In-App Updates** — check GitHub for the latest release, then tap the download button when a new APK is available
 - **MDR savings calculator** (0.4% rule, capped at ₹300, for totals over ₹2,000 — see NPCI's current guidance for the applicable numbers)
 
 **Receive mode** (new):
@@ -92,7 +94,7 @@
 
 > 🚧 **Beta build** — expect rough edges. Please test with small amounts first.
 
-1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay-Android/releases/latest/download/SplitPay-BETA.apk)
+1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay/releases/latest)
 
    *or* Grab the latest APK from the [Releases](../../releases) page,
 
@@ -118,7 +120,11 @@
 | Min SDK | **24** (Android 7.0) | Covers the large majority of Indian devices |
 | Target SDK | **36** (Android 16) | Required for Play Store submissions/updates since Google's Aug 31, 2026 target-API deadline; `compileSdk` is pinned to 37, the max AGP 9.4.x supports |
 
-**No network backend.** The app makes zero outbound HTTP requests; UPI deep links go through the Android intent system, not HTTP. All history/preferences/merchant-account data lives in the WebView's `localStorage`, on-device only. (Fonts are self-hosted under `assets/fonts/` for exactly this reason — see Recent Changes.)
+**No network backend.** Payment data is never uploaded. The app only makes an outbound request when you explicitly check for updates in About; UPI deep links go through the Android intent system, not HTTP. All history/preferences/merchant-account data lives in the WebView's `localStorage`, on-device only. (Fonts are self-hosted under `assets/fonts/` for exactly this reason — see Recent Changes.)
+
+### GitHub
+
+If SplitPay is useful, [star the repository](https://github.com/keshria-hacker/SplitPay) to support the project and help others find it.
 
 ---
 

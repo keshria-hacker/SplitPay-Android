@@ -25,8 +25,10 @@ security processes.
 
 ## How SplitPay is built, and what that means for security
 
-**No backend, no accounts, no network calls of its own.** SplitPay does
-not talk to any SplitPay-operated server. All state — UPI history, saved
+**No backend, no accounts, and no payment-data network calls.** SplitPay does
+not talk to any SplitPay-operated server. The only outbound request is the
+explicit About → Update check to GitHub's public releases API; it does not
+include payment history, UPI IDs, amounts, or account data. All state — UPI history, saved
 amounts, theme, the merchant's saved accounts — lives in the WebView's
 `localStorage` on the device, namespaced under the `sp_` prefix
 (`app/src/main/assets/js/storage.js`). Nothing is uploaded anywhere by
@@ -34,7 +36,7 @@ this app. `AndroidManifest.xml` sets `android:allowBackup="false"`, and
 `network_security_config.xml` disables cleartext (plain HTTP) traffic
 everywhere.
 
-That "no network calls" property is enforced by what the bundled HTML/
+That "no payment-data network calls" property is enforced by what the bundled HTML/
 CSS/JS actually reference, **not** by `network_security_config.xml`
 itself — its `domain-config` entry for `appassets.androidplatform.net`
 sets trust-anchors/cleartext policy for that domain, it does not act as

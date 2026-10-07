@@ -170,13 +170,64 @@ function fmt(n) {
 }
 
 function checkForUpdates() {
-  // Replace this link with your actual download URL or GitHub releases page
-  const updateUrl = "https://github.com/keshria-hacker/SplitPay-Android/releases/latest";
-  
-  if (window.Android && typeof window.Android.checkForUpdates === 'function') {
-    window.Android.checkForUpdates(updateUrl);
+  const status = document.getElementById('update-status');
+  const button = document.getElementById('check-update-btn');
+  const download = document.getElementById('update-download-btn');
+  const apiUrl = 'https://api.github.com/repos/keshria-hacker/SplitPay/releases/latest';
+  const releaseUrl = 'https://github.com/keshria-hacker/SplitPay/releases/latest';
+
+  if (!status || !button) return;
+  button.disabled = true;
+  button.textContent = 'Checking GitHub…';
+  if (download) download.style.display = 'none';
+  status.textContent = 'Fetching the latest release…';
+
+  fetch(apiUrl, { headers: { Accept: 'application/vnd.github+json' } })
+    .then(response => {
+      if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+      return response.json();
+    })
+    .then(release => {
+      const tag = typeof release.tag_name === 'string' ? release.tag_name : 'latest release';
+      const asset = Array.isArray(release.assets)
+        ? release.assets.find(item => typeof item.browser_download_url === 'string' &&
+          /\.apk$/i.test(item.name || ''))
+        : null;
+      const url = asset?.browser_download_url || release.html_url || releaseUrl;
+      status.textContent = `Latest available: ${tag}. Tap “Download latest version” to get it.`;
+      if (download) {
+        download.href = url;
+        download.style.display = 'inline-flex';
+      }
+    })
+    .catch(() => {
+      status.textContent = 'Could not check GitHub. Open Releases to check manually.';
+      if (download) {
+        download.href = releaseUrl;
+        download.style.display = 'inline-flex';
+      }
+    })
+    .finally(() => {
+      button.disabled = false;
+      button.textContent = 'Check again';
+    });
+}
+
+function openGitHubRepo() {
+  const url = 'https://github.com/keshria-hacker/SplitPay';
+  if (window.AndroidBridge && typeof window.AndroidBridge.checkForUpdates === 'function') {
+    window.AndroidBridge.checkForUpdates(url);
   } else {
-    // Fallback for browsers
-    window.open(updateUrl, '_blank');
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+function downloadLatest(event) {
+  const link = event?.currentTarget;
+  const url = link?.href;
+  if (!url || url === window.location.href || url === '#') return;
+  if (window.AndroidBridge && typeof window.AndroidBridge.checkForUpdates === 'function') {
+    event.preventDefault();
+    window.AndroidBridge.checkForUpdates(url);
   }
 }

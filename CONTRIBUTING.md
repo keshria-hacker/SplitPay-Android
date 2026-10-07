@@ -82,14 +82,15 @@ introducing new ones:
   yourself, call `runJs()` directly instead — see `AndroidBridge.kt`'s
   `showInputDialog()` for the pattern, and the README's Recent Changes
   entry on `dispatchDialogResult()` for what happens when this is missed.
-- **No remote resources of any kind** — fonts, scripts, images, API
-  calls. Everything the WebView loads ships inside the APK under
+- **No remote UI resources** — fonts, scripts, and images. Everything the
+  interface loads ships inside the APK under
   `assets/`. If you need a web font or a JS library, vendor it locally
   (see `assets/fonts/` and `assets/js/jsQR.min.js`/`qrcode.min.js` for
   the pattern, including keeping the license/attribution alongside it)
   rather than linking to a CDN — a previous version of this app linked
   Google Fonts remotely, which silently contradicted its own "fully
-  offline" claims.
+  offline" claims. The About → Update tab is the one intentional network
+  exception: it checks GitHub only after the user taps the button.
 
 ## Testing your change
 

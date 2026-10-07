@@ -48,7 +48,7 @@ object UpiLauncher {
     /**
      * Open a `upi://pay?...` link the documented way.
      */
-    fun launch(activity: Activity, upiUrl: String) {
+    fun launch(activity: Activity, upiUrl: String, attemptId: String = "") {
         val uri = Uri.parse(upiUrl)
 
         // ── Route 1: explicit launch to the user's preferred UPI app ──
@@ -56,21 +56,18 @@ object UpiLauncher {
         if (preferred != null) {
             val explicit = Intent(Intent.ACTION_VIEW, uri).apply {
                 setPackage(preferred.packageName)
-                // NEW_TASK: UPI apps live outside our task. SINGLE_TOP
-                // avoids stacking duplicate activities when several parts
-                // are paid back-to-back in a sequence.
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             }
-            if (tryStart(activity, explicit)) return
+            if (tryStart(activity, explicit, attemptId)) return
             // Preferred app exists but refused the intent → fall through
             // to the chooser rather than dead-ending the user.
         }
 
         // ── Route 2: chooser — works with ANY UPI app ever installed ──
-        val chooser = Intent(Intent.ACTION_VIEW, uri).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        if (!tryStart(activity, chooser)) {
+        // Keep this in the caller's task. UPI payment apps are launched
+        // through startActivityForResult(), so NEW_TASK would break the
+        // activity-result contract on some Android versions and UPI apps.
+        val chooser = Intent(Intent.ACTION_VIEW, uri)
+        if (!tryStart(activity, chooser, attemptId)) {
             showAppDialog(activity) {
                 setTitle(activity.getString(R.string.no_upi_app_title))
                 setMessage(activity.getString(R.string.no_upi_app_message))
@@ -85,10 +82,10 @@ object UpiLauncher {
      * Every UPI launch in the app funnels through here so the
      * response is always awaited (Google's requirement #2).
      */
-    private fun tryStart(activity: Activity, intent: Intent): Boolean =
+    private fun tryStart(activity: Activity, intent: Intent, attemptId: String): Boolean =
         try {
             if (intent.resolveActivity(activity.packageManager) != null) {
-                (activity as? MainActivity)?.startUpiIntentForResult(intent)
+                (activity as? MainActivity)?.startUpiIntentForResult(intent, attemptId)
                     ?: activity.startActivityForResult(intent, REQUEST_UPI)
                 true
             } else {

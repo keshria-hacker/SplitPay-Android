@@ -68,24 +68,60 @@
     // when the UPI app returns:
     //   0 = SUCCESS, 1 = FAILURE, 2 = cancelled/no response, 3 = no app.
     //
-    // When a sequence is waiting (S.awaiting) and the app reports SUCCESS,
-    // auto-advance the same way onVisReturn() does — but WITHOUT waiting
-    // for the confirm sheet, because the UPI app itself already told us
-    // the outcome. FAILURE/CANCELLED fall back to the usual confirm flow
-    // (the user marks it), so nothing regresses for apps that return
-    // nothing (older Paytm builds, etc.).
-    window.onUpiResult = function (status, raw) {
+    // A returned SUCCESS/Submitted response is not independent bank
+    // verification, so it only opens the existing confirmation sheet.
+    // The user must verify the transaction in the UPI app before marking
+    // the part paid. Explicit FAILURE opens the QR fallback.
+    window.onUpiResult = function (status, raw, attemptId) {
       try {
-        if (status === 0 && S.awaiting && S.running) {
+        if (!S.awaiting || !S.running ||
+            (attemptId && S.activeAttemptId && attemptId !== S.activeAttemptId)) return;
+
+        if (status === 0) {
           S.awaiting = false;
+          const idx = S.mode === 'manual' && S.mPendingIdx >= 0 ? S.mPendingIdx : S.cur;
+          S.paymentStatus[idx] = 'returned';
           if (S.mode === 'auto') {
             hide('a-cd'); hide('a-ts'); show('a-paybig');
-            setTimeout(function () { doAutoConfirm(true); }, 350);
+            setTimeout(function () {
+              showConfirmSheet(
+                'Part ' + (S.cur + 1) + ' returned',
+                'Verify the payment in your UPI app transaction history before marking it paid.',
+                'auto'
+              );
+            }, 350);
           } else if (S.mPendingIdx >= 0) {
-            S.mPendingIdx = -1;
-            doManualConfirm(true);
+            setTimeout(function () {
+              showConfirmSheet(
+                'Part ' + (idx + 1) + ' returned',
+                'Verify the payment in your UPI app transaction history before marking it paid.',
+                'manual'
+              );
+            }, 350);
           }
-          toast('Payment successful ✓');
+          toast('Returned from UPI. Verify the payment before marking it paid.');
+        } else if (status === 1) {
+          // Some UPI apps, including Paytm for VPAs that do not allow
+          // generic intent payments, reject the deep link after launch.
+          // Offer the QR path for the same part instead of asking the user
+          // to confirm a payment that the app explicitly failed.
+          S.awaiting = false;
+          const idx = S.mode === 'manual' && S.mPendingIdx >= 0 ? S.mPendingIdx : S.cur;
+          S.paymentStatus[idx] = 'failed';
+          clearInterval(S.cdTimer);
+          toast('Direct UPI payment was rejected. Scan the QR instead.', true);
+          if (S.mode === 'auto') {
+            hide('a-cd'); hide('a-ts'); show('a-paybig');
+          }
+          if (typeof showManualQR === 'function' && S.mode === 'manual' && S.mPendingIdx >= 0) {
+            setTimeout(function () {
+              if (S.running) showManualQR(S.mPendingIdx);
+            }, 350);
+          } else if (typeof openCurQR === 'function') {
+            setTimeout(function () {
+              if (S.running) openCurQR();
+            }, 350);
+          }
         }
       } catch (e) {}
     };
