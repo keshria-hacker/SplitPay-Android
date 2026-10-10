@@ -19,8 +19,12 @@ android {
         // hardware-back handling, which already uses OnBackPressedCallback
         // rather than the removed Activity.onBackPressed()/KEYCODE_BACK path).
         targetSdk     = 36
-        versionCode   = 1
-        versionName   = "1.0.0"
+        // versionCode must strictly increase for a device to install this over
+        // an already-installed build; versionName is the human-facing version
+        // and must be kept in step with the two chips in index.html's About
+        // screen (they are hardcoded) and with the release tag on GitHub.
+        versionCode   = 2
+        versionName   = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
