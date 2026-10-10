@@ -82,6 +82,13 @@ introducing new ones:
   yourself, call `runJs()` directly instead — see `AndroidBridge.kt`'s
   `showInputDialog()` for the pattern, and the README's Recent Changes
   entry on `dispatchDialogResult()` for what happens when this is missed.
+- **Full-screen dialogs register themselves.** A modal that behaves like
+  a page (Dashboard, Settings, About) must be added to `FULL_MODALS` in
+  `nav.js` — that is what gives it focus-on-open, focus-return-on-close,
+  an Escape closer and a Tab trap — and to `ALL_DIALOGS`, which is the
+  list hardware back and Escape walk to find something to dismiss.
+  Omitting `ALL_DIALOGS` leaves back presses unhandled; omitting
+  `FULL_MODALS` lets keyboard users Tab out into the page behind.
 - **No remote UI resources** — fonts, scripts, and images. Everything the
   interface loads ships inside the APK under
   `assets/`. If you need a web font or a JS library, vendor it locally
@@ -94,9 +101,12 @@ introducing new ones:
 
 ## Testing your change
 
-There's currently no automated test suite checked into this repository.
-Please verify manually before opening a PR, and consider adding tests
-under a `tests/` directory if you're touching logic-heavy code:
+The only committed automated test is
+`app/src/test/kotlin/com/splitpay/app/util/UpiResponseParserTest.kt`
+(`./gradlew testDebugUnitTest`), which covers Kotlin-side UPI response
+parsing. There is **no committed suite for the web layer yet**, so please
+verify JS/UI changes manually before opening a PR, and consider adding
+tests under a `tests/` directory if you're touching logic-heavy code:
 
 - **Pure logic** (`upiqr.js`, `validator.js`, `split.js`'s math
   functions) has no DOM dependency and can be unit-tested by loading the
@@ -106,14 +116,23 @@ under a `tests/` directory if you're touching logic-heavy code:
 - **UI flows** are straightforward to drive with a headless browser
   (e.g. Playwright) against the `python3 -m http.server` setup above —
   useful for anything spanning multiple screens (scan → plan → pay →
-  receipt).
+  receipt). If you have Node 22+ and Chrome you don't need a dependency
+  at all: launch Chrome with `--headless=new` and
+  `--remote-debugging-port=9222 --remote-allow-origins=*`, point it at
+  the served page, then talk the DevTools Protocol over `fetch()` +
+  `new WebSocket(...)` and drive the page with `Runtime.evaluate`. The
+  Android WebView is Chromium-based, so desktop Chrome is a good proxy
+  for behaviour (not for WebView-only APIs). One gotcha: top-level
+  `const`/`let` in these modules are *lexical* globals — reachable as
+  bare identifiers from `Runtime.evaluate`, but **not** as `window.X`.
 - **On a real device or emulator**, at minimum check: scanning a QR with
   the camera (not just file upload), the hardware back button at each
   screen, and actually opening at least one real UPI app from the pay
   screen.
-- If you change anything in `AndroidManifest.xml`, `network_security_
-  config.xml`, or `file_paths.xml`, re-read [SECURITY.md](SECURITY.md)
-  first — those files are deliberately narrow and a "helpful" widening
+- If you change anything in `AndroidManifest.xml`,
+  `network_security_config.xml`, or `file_paths.xml`, re-read
+  [SECURITY.md](SECURITY.md) first — those files are deliberately narrow
+  and a "helpful" widening
   (e.g. exposing external storage, enabling cleartext traffic) is a
   regression even if it fixes the immediate problem.
 

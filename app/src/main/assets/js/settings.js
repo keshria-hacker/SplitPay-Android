@@ -28,15 +28,16 @@ function openSettings() {
   const modal = document.getElementById('settings-modal');
   if (!modal) return;
   _settingsOpen = true;
-  modal.classList.remove('hide');
   renderUpiAppPicker();
   renderSettingsInfo();
+  // Moves focus into the dialog and gives it Escape + a Tab trap (nav.js).
+  openFullModal('settings-modal');
 }
 
 function closeSettings() {
-  const modal = document.getElementById('settings-modal');
-  if (modal) modal.classList.add('hide');
+  if (!_settingsOpen) return;   // idempotent — back handler may race a tap
   _settingsOpen = false;
+  closeFullModal('settings-modal');
 }
 
 /**

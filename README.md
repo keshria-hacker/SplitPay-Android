@@ -88,6 +88,16 @@
 - A SplitPay payer scanning it sees every account and can spread their split across them, with a balanced default assignment and per-part manual override.
 - The merchant's business name and account list are saved on-device so the QR doesn't need regenerating each time.
 
+**Dashboard** (top-bar button):
+- **Pay history** — one record per finished run (complete, partial or failed) with per-part status, the account each part went to, and the estimated MDR saved
+- **Repeat** — rebuilds a fresh payment from any past record (payee, amount, note)
+- **Receive history** — a log of the merchant QRs generated on this device. It records that a QR was *created*, not that anyone paid it: there is no backend
+- **Search, share, clear** — filter either list by name/UPI ID/note/amount, share it as a plain-text summary, or delete a single record with **Undo**
+
+**Settings** (top-bar button):
+- **Default UPI app** — pick which app opens for payments, or leave it on "Ask every time"
+- **Clear all data** — wipe history, saved UPI IDs, amounts and preferences on this device (the chosen UPI app is deliberately kept)
+
 ---
 
 ## ⬇️ Install
@@ -112,7 +122,7 @@
 |-------|-----------|-----|
 | Language | **Kotlin** (JVM 17) | Native Android, single-activity design |
 | UI Shell | **WebView + WebViewAssetLoader** | UI ships as a local web app served from `https://appassets.androidplatform.net` (secure origin: camera, clipboard APIs work) |
-| UI (web) | Vanilla **HTML/CSS/JS**, zero frameworks, ~16 small modules | No build step for the UI — see [Code Map](#-code-map) for the breakdown |
+| UI (web) | Vanilla **HTML/CSS/JS**, zero frameworks, 18 small modules | No build step for the UI — see [Code Map](#-code-map) for the breakdown |
 | QR decode | **jsQR 1.4.0** (bundled locally, attribution intact) | Offline scanning, no CDN dependency |
 | QR generate | **qrcode.min.js** (bundled locally) | Payment QR fallback + merchant Receive-mode QR — vendored from [qrcodejs](https://github.com/davidshimjs/qrcodejs) (MIT), attribution header intact |
 | Native dialogs | **Material Components** theme + custom XML popups (`dialog/AppDialog.kt`) | Brand-consistent, DayNight aware |
@@ -140,9 +150,9 @@ If SplitPay is useful, [star the repository](https://github.com/keshria-hacker/S
 └────────────┘   └────────────┘   └────────────┘   └────────────┘   └──────────┘
 ```
 
-**Step 1 — Payee.** Scan a UPI QR with the camera (a `setTimeout`-driven jsQR loop on a downscaled 480px frame, ~8 fps to save CPU/battery) or pick from gallery/photo, or type a UPI ID. Scanned `pa=`/`pn=` fields are validated and length-capped. If the scanned QR is a SplitPay merchant QR (see Receive mode), every account it carries is picked up here too.
+**Step 1 — Payee.** Scan a UPI QR with the camera (a `setTimeout`-driven jsQR loop on a downscaled 480px frame, ~8 fps to save CPU/battery) or pick from gallery/photo, or type a UPI ID. Scanned `pa=`/`pn=` fields are validated and length-capped. If the scanned QR is a SplitPay merchant QR (see Receive mode), every account it carries is picked up here too. Saved UPI IDs appear as an autocomplete list under the field — tap one, or reach it with Tab and select it with Enter/Space.
 
-**Step 2 — Amount.** Amount input is sanitized (integer rupees, capped at ₹10,000). Quick chips (2,500 / 5,000 / 10K) highlight when matching.
+**Step 2 — Amount.** Amount input is sanitized (integer rupees, capped at ₹10,000) and has a **×** button to clear it. Quick chips (**₹2,000 / ₹3,000 / ₹5,000 / ₹7,500 / ₹10,000**) highlight when matching, and the last used amount is pre-filled. A live hint shows how many parts the amount will split into and the MDR fee that avoids (debounced, so typing stays smooth), and **Enter** advances to the plan screen.
 
 **Step 3 — Plan.** The app computes the **minimum number of parts** `⌈total / 1999⌉`; you can raise it (max 200). Choose **Equal** or **Random** amounts, edit any part inline, and the sum-check bar turns green only when `Σ parts === total` and every part is within `[₹1, ₹1,999]`. **If the payee is a multi-account merchant**, each part also gets a receiving-account picker, defaulting to a balanced-by-amount assignment across all the merchant's accounts (biggest parts placed first, always onto whichever account has received the least so far); a "one part per account" shortcut and per-part manual overrides are both available.
 
@@ -164,6 +174,19 @@ If SplitPay is useful, [star the repository](https://github.com/keshria-hacker/S
 ```
 
 Add a business name and up to 12 UPI IDs (typed, pasted several at once, or scanned from an existing QR), pick which one is primary, then generate. The QR is `upi://pay?pa=<primary>&pn=<name>&cu=INR&spx=<other accounts, `~`-separated>` — a normal UPI link that any UPI app can pay, plus one extra parameter only SplitPay looks for. See [Core Algorithms](#-core-algorithms) and [SECURITY.md](SECURITY.md) for the full format and its trust properties.
+
+### Dashboard
+
+Two tabs over the on-device history — nothing is uploaded, and clearing a record only edits `localStorage`:
+
+- **Pay history** — one record per finished run (complete, partial or failed), with per-part status, the account each part went to, and the estimated MDR saved.
+- **Receive history** — a log of every merchant QR *generated* on this device. The app has no backend, so it cannot show whether a payer actually scanned or paid one; it is a creation log, not proof of receipt.
+- **Repeat** — re-opens a past pay run prefilled with the same payee, amount and note, landing on the Amount screen ready to continue.
+- **Share** — exports the visible history as a plain-text summary through the native share sheet (or WhatsApp / Web Share as a fallback).
+- **Search** — one filter box for the open tab, matching a name, UPI ID, note or amount.
+- **Delete** — per-record delete offers **Undo**; clear-all is confirmed by a native dialog first.
+
+Escape (on a keyboard) or the hardware back button closes whichever dialog is on top, and focus stays inside full-screen dialogs while they are open.
 
 ---
 
@@ -198,10 +221,13 @@ app/src/main/
 │       ├── validator.js                # UPI ID / amount validation (single source of truth in JS)
 │       ├── upiqr.js                    # UPI QR payload build + parse, incl. the multi-account format
 │       ├── storage.js                  # localStorage wrapper: history, prefs, merchant profile
-│       ├── screens.js, nav.js          # Pay-flow screen transitions + navigation
+│       ├── screens.js, nav.js          # Pay-flow transitions, modals + dialog focus/Escape/Tab handling
 │       ├── split.js                    # split math + plan screen + account assignment
 │       ├── runner.js                   # auto/manual execution + receipt screen
 │       ├── merchant.js                 # Receive-mode UI: accounts, QR generation, sharing
+│       ├── dashboard.js                # history dashboard: pay/receive, repeat, share, search, undo
+│       ├── settings.js                 # default-UPI-app picker + clear-all-data
+│       ├── about.js                    # About modal, MDR calculator, in-app update check
 │       ├── camera.js                   # QR scanning (camera + gallery upload)
 │       ├── dom.js, events.js, utils.js # small shared helpers (incl. esc() for safe innerHTML)
 │       ├── bridge.js                   # swaps in native (Android) behaviour when available
@@ -374,10 +400,75 @@ Contributions are welcome! Full guidance — project conventions, what to test b
 | Min Android | 7.0 (API 24) |
 | Target Android | 16 (API 36) |
 | Architecture | Single Activity + WebView shell + native bridge |
-| UI assets | `index.html` + `css/styles.css` + ~16 JS modules (see [Code Map](#-code-map)) + bundled jsQR/qrcodejs |
+| UI assets | `index.html` + `css/styles.css` + 18 JS modules (see [Code Map](#-code-map)) + bundled jsQR/qrcodejs |
 | Permissions | CAMERA, VIBRATE |
-| Data stored | UPI history, preferences, and merchant accounts — on-device only, in the WebView's `localStorage`; nothing is transmitted anywhere |
+| Data stored | UPI history, pay & receive history, preferences, and merchant accounts — on-device only, in the WebView's `localStorage`; nothing is transmitted anywhere |
 | License | MIT — see note at the top of this README about the `LICENSE` file |
+
+---
+
+## 🧾 Recent Changes
+
+A short record of notable fixes and behaviour changes, newest first. The
+full history is in `git log`; this section exists so the cross-references
+elsewhere in these docs have somewhere to point.
+
+### Dashboard, dialogs and amount entry
+
+- **Dashboard history is searchable, and deleting is undoable.** A filter
+  row matches a payee/merchant name, UPI ID, note or amount. Headline
+  totals stay lifetime figures while a filter is active rather than being
+  silently redefined by it, clear/share stay bound to the full history,
+  and deleting a single record now offers **Undo** in the toast (6 s dwell)
+  instead of being final — the record returns to its original position in
+  the list.
+- **Full-screen dialogs (Dashboard, Settings) now behave like real dialogs.**
+  Focus moves inside on open and returns to whatever opened them on close;
+  **Escape** closes the topmost dialog and is *ignored* when nothing is
+  open, so it can never reach the native "exit SplitPay?" prompt. Escape
+  delegates to the same `onAppBack()` the hardware back button uses, so the
+  two cannot drift apart. `Tab` / `Shift+Tab` are trapped inside the open
+  dialog (About already did this).
+- **Amount entry:** a **×** clear button, Enter-to-advance through the pay
+  flow, a debounced (140 ms) MDR hint so typing does not re-render it on
+  every keystroke, and quick-chip elements resolved once instead of
+  re-queried per keystroke. UPI-history entries are selectable by keyboard.
+
+### One MDR rule
+
+- `MDR_RATE` / `MDR_THRESHOLD` / `MDR_CAP` and `mdrFeeFor()` live in
+  `state.js` only; the receipt (`runner.js`) and the About calculator
+  (`about.js`) both read them, so the two figures can no longer drift apart.
+  `about.js` previously declared its own copy of those constants.
+- `editPart()` clamps the auto-adjusted **tail** part to `[₹1, ₹1,999]`.
+  Editing one part could previously strand a negative or over-limit amount
+  in the plan; when an edit makes the total impossible to reconcile, the
+  sum-check bar flags it instead of the plan silently holding a bad part.
+
+### Fixes the other docs point at
+
+- **`dispatchDialogResult()` double-encoding.** An already-quoted callback
+  id and a pre-stringified boolean were both passed through `callJs()`,
+  which quotes again — so every native confirm/prompt answer was discarded
+  and only ever resolved as `false`/`null`, via `bridge.js`'s 30 s
+  safety-net timer. It now passes the raw id and a real `Boolean`. See
+  [SECURITY.md](SECURITY.md) and the `callJs()` note in
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Fonts are self-hosted.** Zilla Slab and Space Mono were linked from
+  `fonts.googleapis.com`, which contradicted this project's "zero outbound
+  requests" claim and simply broke offline. They now ship under
+  `assets/fonts/` and load through `@font-face`.
+- **`WebView.cacheMode` is `LOAD_DEFAULT`**, not `LOAD_CACHE_ELSE_NETWORK`
+  — the old value could keep serving a stale bundled page out of the HTTP
+  cache after an app update replaced the assets.
+- **`android:launchMode="singleTask"` + `onNewIntent()`** so a
+  `splitpay://` callback link returns to the running Activity instead of
+  stacking a second one.
+- **Duplicate id fixed.** The Manual Ledger progress counter was also
+  `id="m-count"`, which Receive mode used for its account badge, so
+  `getElementById()` always resolved to whichever came first in the
+  document and the badge never updated. The runner's counter is now
+  `mr-count`.
 
 ---
 

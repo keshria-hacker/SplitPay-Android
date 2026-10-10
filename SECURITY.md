@@ -69,9 +69,10 @@ side should never be the only thing standing between untrusted input
 (a scanned QR, a pasted string) and an intent launch.
 
 **The merchant multi-account QR is a standard UPI link, not a new
-protocol.** A SplitPay "Receive mode" QR is `upi://pay?pa=<primary
-account>&...&spx=<other accounts, `~`-separated>`. `pa` is a normal,
-single UPI ID, so any other UPI app that scans the code pays that one
+protocol.** A SplitPay "Receive mode" QR is
+`upi://pay?pa=<primary account>&...&spx=<other accounts, ~-separated>`.
+`pa` is a normal, single UPI ID, so any other UPI app that scans the code
+pays that one
 account exactly as it would any other merchant QR — the extra `spx`
 parameter is simply unrecognized and ignored by apps that don't know
 about it. `app/src/main/assets/js/upiqr.js` is the single place that
@@ -81,9 +82,10 @@ and cannot be made to emit anything other than validated UPI IDs
 regardless of what a scanned QR or pasted string contains — e.g. a
 `spx` value containing a script tag or a `javascript:` URL is simply
 dropped, not parsed as an account, because every token in `spx` goes
-through the same validity check as `pa`. This repository does not yet
-have an automated test suite checked in (see CONTRIBUTING.md); if you
-add one, `upiqr.js`'s parser is the highest-value place to start, since
+through the same validity check as `pa`. The only committed automated
+test is the Kotlin-side `UpiResponseParserTest.kt`; there is still no
+committed suite for the web layer (see CONTRIBUTING.md), and if you add
+one, `upiqr.js`'s parser is the highest-value place to start, since
 it is the one function that turns untrusted scanned/pasted text into
 data the rest of the app acts on.
 
@@ -92,10 +94,11 @@ now correctly round-tripped.** `AndroidBridge.kt` exposes a specific set
 of `@JavascriptInterface` methods to the WebView (clipboard, native
 share, haptics, opening a UPI intent, showing native dialogs); it does
 not expose arbitrary Kotlin reflection or file-system access.
-`WebSettings.allowFileAccess = false`, and `mixedContentMode =
-MIXED_CONTENT_NEVER_ALLOW`. The bridge only runs against assets bundled
-in the APK — SplitPay does not load remote pages into this WebView. A
-previous version of `dispatchDialogResult()` double-encoded its
+`WebSettings.allowFileAccess = false`, and
+`mixedContentMode = MIXED_CONTENT_NEVER_ALLOW`. The bridge only runs
+against assets bundled in the APK — SplitPay does not load remote pages
+into this WebView. A previous version of `dispatchDialogResult()`
+double-encoded its
 arguments on the way back into JS (an already-quoted callback id and a
 pre-stringified boolean both went through `callJs()`'s own quoting a
 second time), which meant every native confirm/prompt dialog's actual

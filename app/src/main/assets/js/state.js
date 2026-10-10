@@ -63,6 +63,21 @@ function getMaxParts(total) {
   return Math.max(1, Math.min(200, Math.floor(total)));
 }
 
+// ── MDR savings rule (single source of truth) ────────────────────
+// NPCI: merchants pay ~0.4% MDR on UPI above ₹2,000 (capped at ₹300), so
+// keeping every part ≤ ₹1,999 avoids the fee entirely. These constants and
+// mdrFeeFor() are shared by the receipt (runner.js) and the About
+// calculator (about.js) so the two figures can never drift apart.
+const MDR_RATE      = 0.004;
+const MDR_THRESHOLD = 2000;
+const MDR_CAP       = 300;
+
+/** Estimated MDR fee a payment of `total` would incur (0 under ₹2,000). */
+function mdrFeeFor(total) {
+  const t = Number(total) || 0;
+  return t <= MDR_THRESHOLD ? 0 : Math.min(t * MDR_RATE, MDR_CAP);
+}
+
 /**
  * Wipe state back to defaults without replacing the S reference
  * (other modules hold a direct reference to the object).

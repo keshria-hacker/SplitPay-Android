@@ -82,9 +82,9 @@ function aboutTab(name) {
 
 /* ── MDR savings calculator ────────────────────────────────────────── */
 
-const MDR_RATE       = 0.004;   // 0.4 % on amounts ≥ ₹2,000
-const MDR_THRESHOLD  = 2000;
-const PART_MAX       = 1999;
+// MDR_RATE / MDR_THRESHOLD / MAX_PART and mdrFeeFor() all live in
+// state.js now (the single source of truth), so the About calculator and
+// the receipt always show the same capped savings figure.
 
 function updateSavingsCalc() {
   const input  = document.getElementById('asb-amt');
@@ -98,9 +98,8 @@ function updateSavingsCalc() {
   }
   const amount = Math.round(raw);
 
-  const parts   = Math.ceil(amount / PART_MAX);
-  const mdrFee  = amount >= MDR_THRESHOLD ? (amount * MDR_RATE).toFixed(2) : '0.00';
-  const saved   = parseFloat(mdrFee);
+  const parts   = Math.ceil(amount / MAX_PART);
+  const mdrFee  = mdrFeeFor(amount).toFixed(2);
 
   if (amount < MDR_THRESHOLD) {
     result.innerHTML = `
@@ -122,7 +121,7 @@ function updateSavingsCalc() {
     </div>
     <div class="asb-row asb-result-row">
       <span>Parts needed</span>
-      <span class="asb-neutral">${parts} × ₹${PART_MAX}</span>
+      <span class="asb-neutral">${parts} × up to ₹${MAX_PART.toLocaleString('en-IN')}</span>
     </div>
     <div class="asb-row asb-save-row">
       <span>You save</span>
@@ -154,8 +153,8 @@ function updateMdrHint(rawAmount) {
     return;
   }
 
-  const parts  = Math.ceil(amount / PART_MAX);
-  const mdrFee = (amount * MDR_RATE).toFixed(2);
+  const parts  = Math.ceil(amount / MAX_PART);
+  const mdrFee = mdrFeeFor(amount).toFixed(2);
 
   hint.className = 'mdr-hint mdr-split';
   hint.innerHTML = `

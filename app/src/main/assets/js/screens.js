@@ -114,15 +114,22 @@ function _renderUpiHistory() {
 
   if (!hist.length) { hide('upi-history'); return; }
 
-  const items = hist.slice(0, 5).map(h => `
-    <div class="hist-item" onclick="_selectUpi(${esc(JSON.stringify(h.upi))},${esc(JSON.stringify(h.name))})" role="option" tabindex="0">
+  // Built once and reused for both the click and keydown handlers so the
+  // (constant, regex-validated) UPI/name arguments can never diverge.
+  const items = hist.slice(0, 5).map(h => {
+    const arg = esc(JSON.stringify(h.upi)) + ',' + esc(JSON.stringify(h.name));
+    return `
+    <div class="hist-item" onclick="_selectUpi(${arg})"
+         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_selectUpi(${arg})}"
+         role="option" tabindex="0">
       <div class="hist-av">${esc(h.upi.charAt(0).toUpperCase())}</div>
       <div class="hist-body">
         <div class="hist-upi">${esc(h.upi)}</div>
         ${h.name ? `<div class="hist-name">${esc(h.name)}</div>` : ''}
       </div>
-      <button class="hist-del" onclick="event.stopPropagation();_removeHistUpi(${esc(JSON.stringify(h.upi))})" aria-label="Remove">×</button>
-    </div>`).join('');
+      <button class="hist-del" onclick="event.stopPropagation();_removeHistUpi(${esc(JSON.stringify(h.upi))})" aria-label="Remove ${esc(h.upi)}">×</button>
+    </div>`;
+  }).join('');
 
   setHtml('upi-history', items);
   show('upi-history');
@@ -154,7 +161,23 @@ document.addEventListener('focusin', e => {
   if (e.target && e.target.id === 'iupi') _renderUpiHistory();
 }, { passive: true });
 
+// Enter advances through the pay flow — the same action as the primary button,
+// so a keyboard user never has to reach for the on-screen "Next".
+document.addEventListener('keydown', e => {
+  if (!e.target) return;
+  if ((e.target.id === 'iupi' || e.target.id === 'iamt' || e.target.id === 'inote')
+      && e.key === 'Enter') {
+    e.preventDefault();
+    if (e.target.id === 'iupi') toStep2(); else toStep3();
+  }
+}, { passive: false });
+
 // ─── STEP 2: AMOUNT ───────────────────────────────────────────────
+
+// Kept off the keystroke path: the hint rewrites innerHTML, so debounce it.
+const _mdrHintDebounced = debounce(v => {
+  if (typeof updateMdrHint === 'function') updateMdrHint(v);
+}, 140);
 
 function sanitizeAmount(el) {
   const r = Validator.amount(el.value);
@@ -162,17 +185,34 @@ function sanitizeAmount(el) {
     if (parseFloat(el.value) > AMT_MAX) el.value = AMT_MAX;
   }
   syncChips();
-  if (typeof updateMdrHint === 'function') updateMdrHint(el.value);
+  _mdrHintDebounced(el.value);
 }
 
 function sa(v) { haptic('light'); setValue('iamt', v); syncChips(); if (typeof updateMdrHint === 'function') updateMdrHint(v); }
 
+/** Clear the amount field (the × inside the input) and re-focus it. */
+function clearAmt() {
+  haptic('light');
+  setValue('iamt', '');
+  syncChips();
+  if (typeof updateMdrHint === 'function') updateMdrHint('');
+  const el = $('iamt');
+  if (el) el.focus();
+}
+
+// The chip elements never change, so resolve the NodeList once instead of
+// re-querying the whole document on every keystroke.
+const CHIP_AMOUNTS = [2000, 3000, 5000, 7500, 10000];
+let _chipEls = null;
+
 function syncChips() {
   const v = parseFloat(getValue('iamt')) || 0;
-  [2000, 3000, 5000, 7500, 10000].forEach((amt, i) => {
-    const chips = $$('.chip');
-    if (chips[i]) chips[i].classList.toggle('on', amt === v);
+  if (!_chipEls) _chipEls = Array.from($$('.chip'));
+  CHIP_AMOUNTS.forEach((amt, i) => {
+    if (_chipEls[i]) _chipEls[i].classList.toggle('on', amt === v);
   });
+  // The clear button only makes sense while there is something to clear.
+  toggleVis('amt-clear', v > 0);
 }
 
 // ─── STEP 3: PLAN SETUP ───────────────────────────────────────────

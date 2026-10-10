@@ -347,15 +347,23 @@ function renderAcctSummary() {
  * the sum-check indicator flags any remaining imbalance.
  */
 function editPart(idx, raw) {
-  const v = Math.max(1, parseInt(raw) || 0);
+  if (!(idx >= 0 && idx < S.splits.length)) return;
+  // Clamp the edited value into the valid [₹1, ₹1,999] band up front.
+  const v = Math.min(MAX_PART, Math.max(1, parseInt(raw, 10) || 0));
   S.splits[idx] = v;
-  if (idx !== S.splits.length - 1) {
+  if (idx !== S.splits.length - 1 && S.splits.length > 1) {
     const others = S.splits.reduce((a, x, i) =>
       i === S.splits.length - 1 ? a : a + x, 0);
-    S.splits[S.splits.length - 1] = S.total - others;
+    // Clamp the auto-adjusted tail part too, so editing one part can never
+    // strand a negative or over-limit amount in the plan. When the edit makes
+    // the total impossible to reconcile, the sum-check bar flags the mismatch
+    // and the user can adjust — but the stored plan stays within the UPI
+    // limits the rest of the app relies on.
+    const tail = Math.min(MAX_PART, Math.max(1, S.total - others));
+    S.splits[S.splits.length - 1] = tail;
     const inputs = document.getElementById('split-preview').querySelectorAll('input');
     const lastInput = inputs[S.splits.length - 1];
-    if (lastInput) lastInput.value = S.splits[S.splits.length - 1];
+    if (lastInput) lastInput.value = tail;
   }
   renderPreview();
 }

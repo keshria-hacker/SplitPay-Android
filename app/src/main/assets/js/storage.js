@@ -210,9 +210,32 @@ const Storage = (() => {
       _set(_payHistKey, hist);
     },
 
-    /** Remove one logged run (Dashboard's per-row delete button). */
+    /**
+     * Remove one logged run (Dashboard's per-row delete button).
+     *
+     * Returns `{ rec, index }` instead of nothing so the caller can put
+     * the record back exactly where it was — the Dashboard offers an
+     * Undo, and "restored at the bottom of the list" would be a worse
+     * outcome than the delete the user just made. Returns null if the
+     * id wasn't found.
+     */
     removePayRecord(id) {
-      _set(_payHistKey, _get(_payHistKey, []).filter(r => r.id !== id));
+      const hist  = _get(_payHistKey, []);
+      const index = hist.findIndex(r => r.id === id);
+      if (index < 0) return null;
+      const rec = hist.splice(index, 1)[0];
+      _set(_payHistKey, hist);
+      return { rec, index };
+    },
+
+    /** Put a record removed by removePayRecord() back at its old index. */
+    restorePayRecord(rec, index = 0) {
+      if (!rec || !rec.id) return;
+      const hist = _get(_payHistKey, []).filter(r => r.id !== rec.id);
+      const at   = Math.max(0, Math.min(hist.length, Number(index) || 0));
+      hist.splice(at, 0, rec);
+      if (hist.length > MAX_PAY_HISTORY) hist.length = MAX_PAY_HISTORY;
+      _set(_payHistKey, hist);
     },
 
     clearPayHistory() { _del(_payHistKey); },
@@ -236,8 +259,24 @@ const Storage = (() => {
       _set(_recvHistKey, hist);
     },
 
+    /** Same contract as removePayRecord() — `{ rec, index }` or null. */
     removeReceiveRecord(id) {
-      _set(_recvHistKey, _get(_recvHistKey, []).filter(r => r.id !== id));
+      const hist  = _get(_recvHistKey, []);
+      const index = hist.findIndex(r => r.id === id);
+      if (index < 0) return null;
+      const rec = hist.splice(index, 1)[0];
+      _set(_recvHistKey, hist);
+      return { rec, index };
+    },
+
+    /** Put a record removed by removeReceiveRecord() back at its old index. */
+    restoreReceiveRecord(rec, index = 0) {
+      if (!rec || !rec.id) return;
+      const hist = _get(_recvHistKey, []).filter(r => r.id !== rec.id);
+      const at   = Math.max(0, Math.min(hist.length, Number(index) || 0));
+      hist.splice(at, 0, rec);
+      if (hist.length > MAX_RECV_HISTORY) hist.length = MAX_RECV_HISTORY;
+      _set(_recvHistKey, hist);
     },
 
     clearReceiveHistory() { _del(_recvHistKey); },

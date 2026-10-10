@@ -381,6 +381,17 @@ input:focus {
 .bigamt input:focus ~ .pfx,
 .bigamt:focus-within .pfx { color: var(--ink); }
 
+/* Amount clear button — revealed by syncChips() only when a value is present. */
+.bigamt input { padding-right: 62px; }
+.amt-clear {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--bdr); background: var(--surf2); color: var(--ink3);
+  cursor: pointer; transition: color var(--t-fast), border-color var(--t-fast);
+}
+.amt-clear:active { transform: translateY(-50%) scale(.92); }
+
 /* ────────────────────────────────────────────────────────────────────────
    9. PAYEE BADGE
    ──────────────────────────────────────────────────────────────────────── */
@@ -1069,6 +1080,20 @@ input:focus {
 .toast.hide {
   animation: toastOut 0.25s var(--ease-i) forwards;
 }
+/* An actionable toast (Undo) must accept the tap; a plain one stays
+   click-through so it never eats a tap meant for the UI under it. */
+.toast.has-act { pointer-events: auto; }
+.toast-act {
+  flex-shrink: 0; margin-left: auto;
+  font-family: inherit; font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 7px 12px; border-radius: var(--r-xs);
+  background: transparent; color: inherit; border: 2px solid currentColor;
+  cursor: pointer;
+  transition: opacity var(--t-fast) var(--ease-o);
+}
+.toast-act:active { opacity: 0.6; }
+.toast-act:focus-visible { outline: 3px solid var(--ok-mid); outline-offset: 2px; }
 
 /* ────────────────────────────────────────────────────────────────────────
    24. UPI HISTORY AUTOCOMPLETE
@@ -1509,6 +1534,23 @@ input:disabled { opacity: 0.55; }
               box-shadow var(--t-fast) var(--ease-o);
 }
 .dt.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ── History filter row ─────────────────────────────────────────── */
+.dash-search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px; background: var(--surf);
+  border-bottom: 2.5px solid var(--bdr); flex-shrink: 0;
+}
+.ds-ic { display: flex; color: var(--ink3); flex-shrink: 0; cursor: pointer; }
+.ds-input {
+  flex: 1; min-width: 0;
+  font-family: inherit; font-size: 0.92rem;
+  padding: 10px 12px; color: var(--ink);
+  background: var(--surf2); border: 2px solid var(--bdr2); border-radius: var(--r-xs);
+}
+.ds-input::placeholder { color: var(--ink3); }
+.ds-input:focus { outline: none; border-color: var(--ink); }
+.ds-input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
 
 .dash-body {
   flex: 1; overflow-y: auto; padding: 18px 18px calc(24px + env(safe-area-inset-bottom, 0px));

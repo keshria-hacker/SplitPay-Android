@@ -47,6 +47,7 @@
   <symbol id="ic-send"   viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></symbol>
   <symbol id="ic-info"   viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8" stroke-linecap="round" stroke-width="3"/><line x1="12" y1="12" x2="12" y2="16"/></symbol>
   <symbol id="ic-help"   viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
   <symbol id="ic-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
   <symbol id="ic-star"   viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
   <symbol id="ic-gift"   viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></symbol>
@@ -78,6 +79,8 @@
 <div class="toast" id="toast" role="alert" aria-live="assertive" aria-atomic="true">
   <svg class="icn icn-sm" aria-hidden="true"><use href="#ic-check"/></svg>
   <span id="toast-msg"></span>
+  <!-- Optional action (e.g. Undo after a delete) — shown by toast() in utils.js -->
+  <button class="toast-act" id="toast-act" type="button" style="display:none;" onclick="toastAction()"></button>
 </div>
 
 <!-- ═══ TOPBAR ══════════════════════════════════════════════════════ -->
@@ -251,6 +254,10 @@
                inputmode="numeric"
                oninput="sanitizeAmount(this)"
                aria-label="Amount in rupees">
+        <button type="button" class="amt-clear" id="amt-clear" style="display:none;"
+                onclick="clearAmt()" aria-label="Clear amount" tabindex="-1">
+          <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-x"/></svg>
+        </button>
       </div>
     </div>
 
@@ -728,10 +735,24 @@
     </button>
   </div>
 
+  <!-- Shown by renderDashboard() only once there is history to search -->
+  <div class="dash-search" id="dash-search-wrap" style="display:none;">
+    <label class="ds-ic" for="dash-search" aria-hidden="true">
+      <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-search"/></svg>
+    </label>
+    <input type="search" id="dash-search" class="ds-input" autocomplete="off"
+           placeholder="Search name, UPI ID or amount…" aria-label="Search history"
+           oninput="dashSearch(this.value)"
+           onkeydown="if(event.key==='Escape'){event.stopPropagation();this.value='';dashSearch('');}">
+  </div>
+
   <div class="dash-body">
     <div class="dash-panel" id="dash-pay-panel" role="tabpanel">
       <div class="dash-stats" id="dash-pay-stats"></div>
       <div class="dash-list" id="dash-pay-list" role="list"></div>
+      <button class="btn btn-ghost btn-full btn-sm" id="dash-pay-share" style="display:none;margin-top:6px;" onclick="dashSharePay()">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-share"/></svg> Share pay history
+      </button>
       <button class="btn btn-ghost btn-full btn-sm" id="dash-pay-clear" style="display:none;margin-top:6px;" onclick="dashClearPay()">
         <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-trash"/></svg> Clear pay history
       </button>
@@ -739,6 +760,9 @@
     <div class="dash-panel" id="dash-recv-panel" role="tabpanel" style="display:none;">
       <div class="dash-stats" id="dash-recv-stats"></div>
       <div class="dash-list" id="dash-recv-list" role="list"></div>
+      <button class="btn btn-ghost btn-full btn-sm" id="dash-recv-share" style="display:none;margin-top:6px;" onclick="dashShareRecv()">
+        <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-share"/></svg> Share receive history
+      </button>
       <button class="btn btn-ghost btn-full btn-sm" id="dash-recv-clear" style="display:none;margin-top:6px;" onclick="dashClearRecv()">
         <svg class="icn icn-sm" style="display:inline-block;" aria-hidden="true"><use href="#ic-trash"/></svg> Clear receive history
       </button>

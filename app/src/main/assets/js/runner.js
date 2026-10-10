@@ -577,8 +577,9 @@ function onAppBack() {
 
 // ─── FINISH ───────────────────────────────────────────────────────
 
+/** MDR fee a merchant avoids by keeping every part ≤ ₹1,999 (see state.js). */
 function calcMdrSavings(total) {
-  return total <= 2000 ? 0 : Math.min(total * 0.004, 300);
+  return mdrFeeFor(total);
 }
 
 function finish() {
@@ -617,6 +618,7 @@ function finish() {
     upi: S.upi,
     name: S.name,
     total: S.total,
+    note: S.note,               // restored by the Dashboard's "Repeat" action
     runMode: S.mode,            // 'auto' | 'manual'
     splitMode: S.splitMode,     // 'equal' | 'random'
     multiAccount: S.payees.length > 1,

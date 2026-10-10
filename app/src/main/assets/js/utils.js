@@ -15,20 +15,82 @@ function haptic(type = 'light') {
 
 // ─── TOAST ────────────────────────────────────────────────────────
 let _toastTimer;
+let _toastSweep;
+let _toastAction = null;
 
-function toast(msg, err = false) {
+/**
+ * Show a transient message.
+ *
+ * The optional third argument adds an action button — the Dashboard's
+ * "Undo" after a delete is the only user so far. An actionable toast
+ * stays on screen noticeably longer, because the user has to read it
+ * *and* decide, and because a 3-second undo is not a real undo.
+ *
+ * @param {string} msg
+ * @param {boolean} [err=false]
+ * @param {{label?: string, fn: Function}} [action]
+ */
+function toast(msg, err = false, action = null) {
   haptic(err ? 'error' : 'light');
-  const el   = document.getElementById('toast');
+  const el = document.getElementById('toast');
+  if (!el) return;                       // never let a missing toast break a flow
   const msgEl = document.getElementById('toast-msg');
   const icn   = el.querySelector('.icn use');
   clearTimeout(_toastTimer);
+  clearTimeout(_toastSweep);
+
+  _toastAction = action && typeof action.fn === 'function' ? action : null;
+  const actEl = document.getElementById('toast-act');
+  if (actEl) {
+    actEl.textContent   = _toastAction ? (_toastAction.label || 'Undo') : '';
+    actEl.style.display = _toastAction ? '' : 'none';
+  }
+  el.classList.toggle('has-act', !!_toastAction);
+
   msgEl.textContent = msg;
-  icn.setAttribute('href', err ? '#ic-x' : '#ic-check');
+  if (icn) icn.setAttribute('href', err ? '#ic-x' : '#ic-check');
   el.style.background   = err ? 'var(--surf2)' : 'var(--ink)';
   el.style.color        = err ? 'var(--ink)'   : 'var(--bg)';
   el.style.borderColor  = err ? 'var(--err)'   : 'var(--bdr)';
   el.classList.add('show');
-  _toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  _toastTimer = setTimeout(_toastHide, _toastAction ? 6000 : 3200);
+}
+
+/** Slide the toast out, then drop any action it was still offering. */
+function _toastHide() {
+  const el = document.getElementById('toast');
+  if (el) el.classList.remove('show');
+  clearTimeout(_toastTimer);
+  clearTimeout(_toastSweep);
+  _toastSweep = setTimeout(() => {
+    _toastAction = null;
+    const actEl = document.getElementById('toast-act');
+    if (actEl) { actEl.textContent = ''; actEl.style.display = 'none'; }
+    const t = document.getElementById('toast');
+    if (t) t.classList.remove('has-act');
+  }, 300);
+}
+
+/** Run the toast's action (wired to the toast button in index.html). */
+function toastAction() {
+  const fn = _toastAction && _toastAction.fn;
+  _toastAction = null;
+  _toastHide();
+  if (fn) { try { fn(); } catch (e) { console.error('[toast] action failed:', e); } }
+}
+
+// ─── DEBOUNCE ─────────────────────────────────────────────────────
+/**
+ * Trailing-edge debounce. Returns a wrapper that only runs `fn` once
+ * `ms` have passed without another call. Used to keep expensive DOM
+ * work (e.g. re-rendering the MDR hint) off every keystroke.
+ */
+function debounce(fn, ms = 120) {
+  let t;
+  return function (...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, args), ms);
+  };
 }
 
 // ─── SHAKE ────────────────────────────────────────────────────────
