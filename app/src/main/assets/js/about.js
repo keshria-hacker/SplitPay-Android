@@ -168,12 +168,19 @@ function fmt(n) {
   return Number(n).toLocaleString('en-IN');
 }
 
+// Canonical repository, in one place. The project was renamed from
+// "SplitPay" to "SplitPay-Android": GitHub still 301-redirects the old
+// paths, but both URLs below use the new slug so the update check never
+// depends on that redirect surviving — or on nobody claiming the old name.
+const REPO_SLUG = 'keshria-hacker/SplitPay-Android';
+const REPO_WEB  = 'https://github.com/' + REPO_SLUG;
+
 function checkForUpdates() {
   const status = document.getElementById('update-status');
   const button = document.getElementById('check-update-btn');
   const download = document.getElementById('update-download-btn');
-  const apiUrl = 'https://api.github.com/repos/keshria-hacker/SplitPay/releases/latest';
-  const releaseUrl = 'https://github.com/keshria-hacker/SplitPay/releases/latest';
+  const apiUrl = 'https://api.github.com/repos/' + REPO_SLUG + '/releases/latest';
+  const releaseUrl = REPO_WEB + '/releases/latest';
 
   if (!status || !button) return;
   button.disabled = true;
@@ -213,7 +220,7 @@ function checkForUpdates() {
 }
 
 function openGitHubRepo() {
-  const url = 'https://github.com/keshria-hacker/SplitPay';
+  const url = REPO_WEB;
   if (window.AndroidBridge && typeof window.AndroidBridge.checkForUpdates === 'function') {
     window.AndroidBridge.checkForUpdates(url);
   } else {

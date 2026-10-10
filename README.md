@@ -104,7 +104,7 @@
 
 > 🚧 **Beta build** — expect rough edges. Please test with small amounts first.
 
-1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay/releases/latest)
+1. [![Download APK](https://img.shields.io/badge/Download-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/keshria-hacker/SplitPay-Android/releases/latest)
 
    *or* Grab the latest APK from the [Releases](../../releases) page,
 
@@ -134,7 +134,7 @@
 
 ### GitHub
 
-If SplitPay is useful, [star the repository](https://github.com/keshria-hacker/SplitPay) to support the project and help others find it.
+If SplitPay is useful, [star the repository](https://github.com/keshria-hacker/SplitPay-Android) to support the project and help others find it.
 
 ---
 
@@ -444,6 +444,14 @@ elsewhere in these docs have somewhere to point.
   Editing one part could previously strand a negative or over-limit amount
   in the plan; when an edit makes the total impossible to reconcile, the
   sum-check bar flags it instead of the plan silently holding a bad part.
+
+### Repository rename
+
+- The project moved to **`keshria-hacker/SplitPay-Android`**. GitHub still
+  redirects the old `keshria-hacker/SplitPay` paths, but the in-app update
+  check (`about.js`) and this README now use the new slug so nothing
+  depends on that redirect staying in place. `about.js` keeps the slug in
+  one `REPO_SLUG` constant.
 
 ### Fixes the other docs point at
 
